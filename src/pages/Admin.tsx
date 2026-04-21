@@ -245,11 +245,8 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                 Районы города
               </div>
               {activeCity.districts.map((d) => {
-                const items = visibleProducts.filter(
-                  (p) =>
-                    !p.districts ||
-                    p.districts.length === 0 ||
-                    p.districts.includes(d.slug)
+                const items = visibleProducts.filter((p) =>
+                  p.districts?.includes(d.slug)
                 );
                 return (
                   <div key={d.slug} className="border-t pt-2 first:border-t-0 first:pt-0">
@@ -565,7 +562,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                   <div>
                     <Label>Районы</Label>
                     <p className="text-[11px] text-muted-foreground mt-1">
-                      Если ничего не выбрано — товар доступен во всех районах выбранных городов.
+                      Отметьте районы, где доступен товар. Если не выбрать ни одного — товар не будет показан ни в одном районе.
                     </p>
                     <div className="space-y-3 mt-2">
                       {cityWithDistricts.map((city) => (
@@ -735,7 +732,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                             {selectedCitiesWithDistricts.length > 0 && (
                               <div>
                                 <div className="text-[11px] text-muted-foreground mb-1">
-                                  Доступен в районах (пусто = во всех)
+                                  Доступен в районах (пусто = нигде)
                                 </div>
                                 <div className="space-y-1.5">
                                   {selectedCitiesWithDistricts.map((city) => (
