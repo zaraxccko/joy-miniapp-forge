@@ -206,29 +206,57 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-foreground/80 flex gap-2 items-start">
-              <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <span>
-                {tr(
-                  "Отправьте указанную сумму на адрес выше. Подтверждение обычно занимает 5–15 минут. После зачисления нажмите кнопку ниже.",
-                  "Send the exact amount to the address above. Confirmation usually takes 5–15 minutes. Tap the button below once funds arrive."
-                )}
-              </span>
-            </div>
+            {pending.status === "awaiting" ? (
+              <>
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground/80 flex gap-2 items-start">
+                  <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    {tr(
+                      "Заявка отправлена. Ожидает подтверждения админа — обычно 5–15 минут. Баланс пополнится автоматически.",
+                      "Submitted. Waiting for admin confirmation — usually 5–15 minutes. Balance will be topped up automatically."
+                    )}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setPendingId(null)}
+                  className="w-full bg-card border border-border font-bold py-4 rounded-2xl active:scale-[0.98]"
+                >
+                  {tr("Готово", "Done")}
+                </button>
+                <button
+                  onClick={cancel}
+                  className="w-full text-sm text-muted-foreground py-2 active:scale-95"
+                >
+                  {tr("Отменить заявку", "Cancel request")}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-foreground/80 flex gap-2 items-start">
+                  <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    {tr(
+                      "Отправьте указанную сумму на адрес выше. После оплаты нажмите кнопку ниже — заявка уйдёт админу на подтверждение.",
+                      "Send the exact amount to the address above. Then tap the button below — your request will be sent to the admin for confirmation."
+                    )}
+                  </span>
+                </div>
 
-            <button
-              onClick={confirmPaid}
-              className="w-full gradient-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-glow active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <Check className="w-5 h-5" />
-              {tr("Я оплатил", "I have paid")}
-            </button>
-            <button
-              onClick={cancel}
-              className="w-full text-sm text-muted-foreground py-2 active:scale-95"
-            >
-              {tr("Отменить пополнение", "Cancel top-up")}
-            </button>
+                <button
+                  onClick={confirmPaid}
+                  className="w-full gradient-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-glow active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" />
+                  {tr("Я оплатил", "I have paid")}
+                </button>
+                <button
+                  onClick={cancel}
+                  className="w-full text-sm text-muted-foreground py-2 active:scale-95"
+                >
+                  {tr("Отменить пополнение", "Cancel top-up")}
+                </button>
+              </>
+            )}
           </section>
         )}
       </main>
