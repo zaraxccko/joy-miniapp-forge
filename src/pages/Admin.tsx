@@ -438,33 +438,6 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>{t("admin.price")}</Label>
-                  <Input
-                    type="number"
-                    value={editingP.priceTHB}
-                    onChange={(e) =>
-                      setEditingP({ ...editingP, priceTHB: Number(e.target.value) || 0 })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>{t("admin.stock")}</Label>
-                  <Input
-                    type="number"
-                    value={editingP.inStock}
-                    onChange={(e) =>
-                      setEditingP({ ...editingP, inStock: Number(e.target.value) || 0 })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>{t("admin.weight")}</Label>
-                  <Input
-                    value={editingP.weight ?? ""}
-                    onChange={(e) => setEditingP({ ...editingP, weight: e.target.value })}
-                  />
-                </div>
                 <div className="col-span-2 grid grid-cols-2 gap-2">
                   <div>
                     <Label>{t("admin.badge")} (RU)</Label>
