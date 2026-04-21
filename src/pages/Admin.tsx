@@ -697,86 +697,64 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                                     v.id === variant.id ? { ...v, stashes: s, districts: undefined } : v
                                   )
                                 );
+                              const toggleStash = (districtSlug: string, type: StashType) => {
+                                const exists = stashes.some(
+                                  (s) => s.districtSlug === districtSlug && s.type === type
+                                );
+                                if (exists) {
+                                  setStashes(
+                                    stashes.filter(
+                                      (s) => !(s.districtSlug === districtSlug && s.type === type)
+                                    )
+                                  );
+                                } else {
+                                  setStashes([...stashes, { districtSlug, type }]);
+                                }
+                              };
                               return (
                                 <div>
                                   <div className="text-[11px] text-muted-foreground mb-1.5">
                                     Закладки (район + тип). Пара уникальна.
                                   </div>
                                   <div className="space-y-1.5">
-                                    {stashes.length === 0 && (
-                                      <div className="text-[11px] text-muted-foreground italic">
-                                        Пока нет закладок.
-                                      </div>
-                                    )}
-                                    {stashes.map((s, idx) => {
-                                      const districtMeta = selectedCitiesWithDistricts
-                                        .flatMap((c) => c.districts!)
-                                        .find((d) => d.slug === s.districtSlug);
-                                      const typeMeta = STASH_TYPES.find((t) => t.value === s.type);
-                                      return (
-                                        <div
-                                          key={idx}
-                                          className="flex items-center gap-2 bg-background rounded-lg px-2 py-1.5"
-                                        >
-                                          <span className="text-[11px] flex-1 truncate">
-                                            📍 {districtMeta?.name.ru ?? s.districtSlug}
-                                          </span>
-                                          <span className="text-[11px] bg-muted rounded-full px-2 py-0.5">
-                                            {typeMeta?.emoji} {typeMeta?.label.ru}
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              setStashes(stashes.filter((_, i) => i !== idx))
-                                            }
-                                            className="w-6 h-6 rounded-full bg-muted flex items-center justify-center active:scale-90"
-                                            aria-label="Удалить"
-                                          >
-                                            <Trash2 className="w-3 h-3 text-destructive" />
-                                          </button>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-
-                                  {/* Добавление новой закладки: район + тип */}
-                                  <div className="mt-2 space-y-1.5">
                                     {selectedCitiesWithDistricts.map((city) => (
-                                      <div key={city.slug}>
-                                        <div className="text-[11px] font-semibold mb-0.5">
-                                          {city.country.flag} {city.name.ru}
-                                        </div>
-                                        <div className="space-y-1">
-                                          {city.districts!.map((d) => {
-                                            const usedTypes = new Set<StashType>(
-                                              stashes.filter((s) => s.districtSlug === d.slug).map((s) => s.type)
-                                            );
-                                            const available = STASH_TYPES.filter((t) => !usedTypes.has(t.value));
-                                            if (available.length === 0) return null;
-                                            return (
-                                              <div key={d.slug} className="flex items-center gap-1 flex-wrap">
-                                                <span className="text-[11px] text-muted-foreground w-20 shrink-0 truncate">
-                                                  {d.name.ru}
+                                      <div key={city.slug} className="space-y-1">
+                                        {city.districts!.map((d) => {
+                                          const districtTypes = new Set<StashType>(
+                                            stashes
+                                              .filter((s) => s.districtSlug === d.slug)
+                                              .map((s) => s.type)
+                                          );
+                                          return (
+                                            <div
+                                              key={d.slug}
+                                              className="bg-background rounded-xl px-2.5 py-2"
+                                            >
+                                              <div className="flex items-center gap-1 flex-wrap">
+                                                <span className="text-[11px] font-semibold mr-1">
+                                                  📍 {d.name.ru}
                                                 </span>
-                                                {available.map((t) => (
-                                                  <button
-                                                    key={t.value}
-                                                    type="button"
-                                                    onClick={() =>
-                                                      setStashes([
-                                                        ...stashes,
-                                                        { districtSlug: d.slug, type: t.value },
-                                                      ])
-                                                    }
-                                                    className="text-[10px] bg-muted rounded-full px-2 py-0.5 active:scale-95"
-                                                  >
-                                                    + {t.emoji} {t.label.ru}
-                                                  </button>
-                                                ))}
+                                                {STASH_TYPES.map((t) => {
+                                                  const active = districtTypes.has(t.value);
+                                                  return (
+                                                    <button
+                                                      key={t.value}
+                                                      type="button"
+                                                      onClick={() => toggleStash(d.slug, t.value)}
+                                                      className={`text-[10px] rounded-full px-2 py-0.5 active:scale-95 transition-colors ${
+                                                        active
+                                                          ? "gradient-primary text-primary-foreground"
+                                                          : "bg-muted text-muted-foreground"
+                                                      }`}
+                                                    >
+                                                      {active ? "" : "+ "}{t.emoji} {t.label.ru}
+                                                    </button>
+                                                  );
+                                                })}
                                               </div>
-                                            );
-                                          })}
-                                        </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     ))}
                                   </div>
