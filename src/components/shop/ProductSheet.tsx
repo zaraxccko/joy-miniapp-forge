@@ -141,7 +141,7 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                       <div className="font-semibold text-sm">{d.name[lang]}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
                         {variantsInCity.filter((v) => v.districts?.includes(d.slug)).length}{" "}
-                        {lang === "ru" ? "фасовок" : "options"}
+                        {lang === "ru" ? "вариантов" : "options"}
                       </div>
                     </button>
                   ))}
