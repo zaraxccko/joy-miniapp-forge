@@ -1,7 +1,8 @@
 import type { Category } from "@/types/shop";
 import { haptic } from "@/lib/telegram";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useI18n, useT } from "@/lib/i18n";
+import { loc } from "@/lib/loc";
 
 interface CategoryPillsProps {
   categories: Category[];
@@ -11,6 +12,7 @@ interface CategoryPillsProps {
 
 export const CategoryPills = ({ categories, active, onChange }: CategoryPillsProps) => {
   const t = useT();
+  const lang = useI18n((s) => s.lang) ?? "ru";
   const all = { slug: "all", name: t("cat.all"), emoji: "✨" };
   const list = [all, ...categories];
 
@@ -33,7 +35,7 @@ export const CategoryPills = ({ categories, active, onChange }: CategoryPillsPro
             )}
           >
             <span className="text-base">{c.emoji}</span>
-            {c.name}
+            {loc(c.name, lang)}
           </button>
         );
       })}

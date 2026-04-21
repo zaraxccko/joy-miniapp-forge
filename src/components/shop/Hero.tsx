@@ -1,6 +1,7 @@
 import type { Product } from "@/types/shop";
 import { formatTHB } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useI18n, useT } from "@/lib/i18n";
+import { loc } from "@/lib/loc";
 
 interface HeroProps {
   product: Product;
@@ -9,6 +10,7 @@ interface HeroProps {
 
 export const Hero = ({ product, onClick }: HeroProps) => {
   const t = useT();
+  const lang = useI18n((s) => s.lang) ?? "ru";
   return (
     <button
       onClick={onClick}
@@ -31,7 +33,7 @@ export const Hero = ({ product, onClick }: HeroProps) => {
           {t("hero.pickOfDay")}
         </div>
         <div className="font-display text-[22px] font-bold leading-tight text-foreground max-w-[60%]">
-          {product.name}
+          {loc(product.name, lang)}
         </div>
         <div className="flex items-center gap-2 mt-3">
           <span className="bg-card/90 backdrop-blur text-foreground text-xs font-bold px-3 py-1.5 rounded-full">

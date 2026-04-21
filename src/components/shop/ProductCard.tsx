@@ -4,6 +4,8 @@ import { useCart } from "@/store/cart";
 import { formatTHB } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
+import { loc } from "@/lib/loc";
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +15,8 @@ interface ProductCardProps {
 export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
   const add = useCart((s) => s.add);
   const qty = useCart((s) => s.lines.find((l) => l.product.id === product.id)?.qty ?? 0);
+  const lang = useI18n((s) => s.lang) ?? "ru";
+  const name = loc(product.name, lang);
 
   return (
     <div className="bg-card rounded-3xl overflow-hidden shadow-card animate-fade-in flex flex-col">
@@ -26,7 +30,7 @@ export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
-            alt={product.name}
+            alt={name}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -45,13 +49,13 @@ export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
         )}
         {product.badge && (
           <span className="absolute top-2 right-2 bg-card text-primary text-[10px] font-bold px-2 py-1 rounded-full shadow-card">
-            {product.badge}
+            {loc(product.badge, lang)}
           </span>
         )}
       </button>
       <div className="p-3 flex-1 flex flex-col">
         <div className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">
-          {product.name}
+          {name}
         </div>
         <div className="text-[11px] text-muted-foreground mt-0.5">{product.weight}</div>
         <div className="flex items-center justify-between mt-2">

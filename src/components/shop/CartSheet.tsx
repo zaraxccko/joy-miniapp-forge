@@ -3,7 +3,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useCart } from "@/store/cart";
 import { formatTHB } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
-import { useT } from "@/lib/i18n";
+import { useI18n, useT } from "@/lib/i18n";
+import { loc } from "@/lib/loc";
 
 interface CartSheetProps {
   open: boolean;
@@ -17,6 +18,7 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
   const remove = useCart((s) => s.remove);
   const total = useCart((s) => s.totalTHB());
   const t = useT();
+  const lang = useI18n((s) => s.lang) ?? "ru";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -54,7 +56,7 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm leading-tight line-clamp-2">
-                      {line.product.name}
+                      {loc(line.product.name, lang)}
                     </div>
                     <div className="text-primary font-bold text-sm mt-1">
                       {formatTHB(line.product.priceTHB * line.qty)}
