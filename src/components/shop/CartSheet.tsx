@@ -52,7 +52,6 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
         </SheetHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4">
-          {lines.length === 0 ? (<>{null}</> && null) }
           {lines.length === 0 ? (
             <div className="py-16 text-center">
               <div className="text-6xl mb-3">🛍️</div>
