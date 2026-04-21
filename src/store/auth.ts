@@ -10,27 +10,56 @@ const ENV_TG_IDS = ((import.meta.env.VITE_ADMIN_TG_IDS as string | undefined) ??
   .filter(Boolean)
   .map(Number);
 
+export const MAX_ATTEMPTS = 5;
+export const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+
 interface AuthState {
   isAdmin: boolean;
-  loginWithPassword: (pwd: string) => boolean;
+  failedAttempts: number;
+  lockedUntil: number | null; // epoch ms
+  loginWithPassword: (pwd: string) => { ok: boolean; locked: boolean; remaining: number };
   loginWithTelegram: (tgUserId?: number | null) => boolean;
   logout: () => void;
+  getLockRemainingMs: () => number;
 }
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isAdmin: false,
+      failedAttempts: 0,
+      lockedUntil: null,
+      getLockRemainingMs: () => {
+        const { lockedUntil } = get();
+        if (!lockedUntil) return 0;
+        return Math.max(0, lockedUntil - Date.now());
+      },
       loginWithPassword: (pwd) => {
-        if (pwd && pwd === ENV_PASSWORD) {
-          set({ isAdmin: true });
-          return true;
+        const state = get();
+        const now = Date.now();
+        if (state.lockedUntil && state.lockedUntil > now) {
+          return { ok: false, locked: true, remaining: state.lockedUntil - now };
         }
-        return false;
+        // Lock expired — reset counter
+        if (state.lockedUntil && state.lockedUntil <= now) {
+          set({ lockedUntil: null, failedAttempts: 0 });
+        }
+        if (pwd && pwd === ENV_PASSWORD) {
+          set({ isAdmin: true, failedAttempts: 0, lockedUntil: null });
+          return { ok: true, locked: false, remaining: 0 };
+        }
+        const attempts = state.failedAttempts + 1;
+        if (attempts >= MAX_ATTEMPTS) {
+          const until = now + LOCKOUT_MS;
+          set({ failedAttempts: attempts, lockedUntil: until });
+          return { ok: false, locked: true, remaining: LOCKOUT_MS };
+        }
+        set({ failedAttempts: attempts });
+        return { ok: false, locked: false, remaining: 0 };
       },
       loginWithTelegram: (tgUserId) => {
         if (tgUserId && ENV_TG_IDS.includes(tgUserId)) {
-          set({ isAdmin: true });
+          set({ isAdmin: true, failedAttempts: 0, lockedUntil: null });
           return true;
         }
         return false;
