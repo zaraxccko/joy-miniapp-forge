@@ -154,6 +154,11 @@ const Index = () => {
       <DepositPage
         suggested={depositSuggested}
         onBack={() => { setDepositOpen(false); setDepositSuggested(undefined); }}
+        onDone={() => {
+          setDepositOpen(false);
+          setDepositSuggested(undefined);
+          setShowAccount(true);
+        }}
       />
     );
 
