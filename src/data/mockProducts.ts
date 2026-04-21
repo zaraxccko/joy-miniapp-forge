@@ -1,18 +1,21 @@
 import type { Category, Product } from "@/types/shop";
 
 export const CATEGORIES: Category[] = [
-  { slug: "gummies", name: "Жевательное", emoji: "🍬", gradient: "gradient-grape" },
-  { slug: "chocolate", name: "Шоколад", emoji: "🍫", gradient: "gradient-mango" },
-  { slug: "cookies", name: "Печенье", emoji: "🍪", gradient: "gradient-mango" },
-  { slug: "drinks", name: "Напитки", emoji: "🥤", gradient: "gradient-mint" },
-  { slug: "vapes", name: "Вейпы", emoji: "💨", gradient: "gradient-grape" },
+  { slug: "gummies", name: { ru: "Жевательное", en: "Gummies" }, emoji: "🍬", gradient: "gradient-grape" },
+  { slug: "chocolate", name: { ru: "Шоколад", en: "Chocolate" }, emoji: "🍫", gradient: "gradient-mango" },
+  { slug: "cookies", name: { ru: "Печенье", en: "Cookies" }, emoji: "🍪", gradient: "gradient-mango" },
+  { slug: "drinks", name: { ru: "Напитки", en: "Drinks" }, emoji: "🥤", gradient: "gradient-mint" },
+  { slug: "vapes", name: { ru: "Вейпы", en: "Vapes" }, emoji: "💨", gradient: "gradient-grape" },
 ];
 
 export const PRODUCTS: Product[] = [
   {
     id: "p1",
-    name: "Mango Sticky Rice Gummies",
-    description: "Тайская классика в желейном формате. Сочный манго и сладкий рис.",
+    name: { ru: "Mango Sticky Rice Gummies", en: "Mango Sticky Rice Gummies" },
+    description: {
+      ru: "Тайская классика в желейном формате. Сочный манго и сладкий рис.",
+      en: "Thai classic in gummy form. Juicy mango and sweet rice.",
+    },
     category: "gummies",
     priceTHB: 450,
     thcMg: 25,
@@ -21,13 +24,16 @@ export const PRODUCTS: Product[] = [
     gradient: "gradient-mango",
     emoji: "🥭",
     featured: true,
-    badge: "Хит",
+    badge: { ru: "Хит", en: "Hit" },
     cities: ["phuket", "bangkok", "pattaya", "samui"],
   },
   {
     id: "p2",
-    name: "Strawberry Cloud Gummies",
-    description: "Воздушные мармеладки с натуральной клубникой.",
+    name: { ru: "Strawberry Cloud Gummies", en: "Strawberry Cloud Gummies" },
+    description: {
+      ru: "Воздушные мармеладки с натуральной клубникой.",
+      en: "Airy gummies with real strawberry.",
+    },
     category: "gummies",
     priceTHB: 420,
     thcMg: 20,
@@ -39,8 +45,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p3",
-    name: "Dark Chocolate Bar",
-    description: "Бельгийский тёмный шоколад 70% с лёгкой ноткой мяты.",
+    name: { ru: "Dark Chocolate Bar", en: "Dark Chocolate Bar" },
+    description: {
+      ru: "Бельгийский тёмный шоколад 70% с лёгкой ноткой мяты.",
+      en: "Belgian 70% dark chocolate with a hint of mint.",
+    },
     category: "chocolate",
     priceTHB: 320,
     thcMg: 10,
@@ -52,8 +61,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p4",
-    name: "Coconut Choco Bites",
-    description: "Хрустящие шарики с кокосом в молочном шоколаде.",
+    name: { ru: "Coconut Choco Bites", en: "Coconut Choco Bites" },
+    description: {
+      ru: "Хрустящие шарики с кокосом в молочном шоколаде.",
+      en: "Crunchy coconut balls in milk chocolate.",
+    },
     category: "chocolate",
     priceTHB: 380,
     thcMg: 15,
@@ -61,13 +73,16 @@ export const PRODUCTS: Product[] = [
     inStock: 12,
     gradient: "gradient-mint",
     emoji: "🥥",
-    badge: "Новинка",
+    badge: { ru: "Новинка", en: "New" },
     cities: ["bali", "phuket"],
   },
   {
     id: "p5",
-    name: "Pineapple Cookies",
-    description: "Мягкое печенье с кусочками тайского ананаса.",
+    name: { ru: "Pineapple Cookies", en: "Pineapple Cookies" },
+    description: {
+      ru: "Мягкое печенье с кусочками тайского ананаса.",
+      en: "Soft cookies with chunks of Thai pineapple.",
+    },
     category: "cookies",
     priceTHB: 290,
     thcMg: 10,
@@ -79,8 +94,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p6",
-    name: "Lychee Iced Tea",
-    description: "Холодный чай с личи и лёгким эффектом расслабления.",
+    name: { ru: "Lychee Iced Tea", en: "Lychee Iced Tea" },
+    description: {
+      ru: "Холодный чай с личи и лёгким эффектом расслабления.",
+      en: "Cold lychee tea with a light relaxing effect.",
+    },
     category: "drinks",
     priceTHB: 250,
     thcMg: 5,
@@ -92,8 +110,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p7",
-    name: "Mint Mojito Vape",
-    description: "Одноразовый вейп со вкусом мяты и лайма.",
+    name: { ru: "Mint Mojito Vape", en: "Mint Mojito Vape" },
+    description: {
+      ru: "Одноразовый вейп со вкусом мяты и лайма.",
+      en: "Disposable vape with mint and lime flavor.",
+    },
     category: "vapes",
     priceTHB: 850,
     thcMg: 500,
@@ -105,8 +126,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "p8",
-    name: "Berry Bliss Cookies",
-    description: "Печенье с микс-ягодами и белым шоколадом.",
+    name: { ru: "Berry Bliss Cookies", en: "Berry Bliss Cookies" },
+    description: {
+      ru: "Печенье с микс-ягодами и белым шоколадом.",
+      en: "Cookies with mixed berries and white chocolate.",
+    },
     category: "cookies",
     priceTHB: 310,
     cbdMg: 25,
