@@ -716,9 +716,14 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                                   <div className="text-[11px] text-muted-foreground mb-1.5">
                                     Закладки (район + тип). Пара уникальна.
                                   </div>
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-3">
                                     {selectedCitiesWithDistricts.map((city) => (
                                       <div key={city.slug} className="space-y-1">
+                                        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground px-1">
+                                          <span>{city.country.flag}</span>
+                                          <span>{city.name.ru}</span>
+                                          <span className="flex-1 h-px bg-border ml-1" />
+                                        </div>
                                         {city.districts!.map((d) => {
                                           const districtTypes = new Set<StashType>(
                                             stashes
