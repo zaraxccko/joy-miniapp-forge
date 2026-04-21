@@ -79,6 +79,8 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
   const citySlug = useLocation((s) => s.city);
   const add = useCart((s) => s.add);
+  const delivery = useCart((s) => s.delivery);
+  const toggleDelivery = useCart((s) => s.toggleDelivery);
   const [districtSlug, setDistrictSlug] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAdd | null>(null);
 
@@ -307,6 +309,24 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                                   {t.emoji} {t.label[lang]}
                                 </span>
                               ))}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  haptic("light");
+                                  toggleDelivery();
+                                }}
+                                className={`text-[10px] rounded-full px-2 py-0.5 inline-flex items-center gap-1 transition-colors active:scale-95 ${
+                                  delivery
+                                    ? "gradient-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Truck className="w-3 h-3" />
+                                {delivery
+                                  ? lang === "ru" ? `Доставка $${DELIVERY_FEE_USD}` : `Delivery $${DELIVERY_FEE_USD}`
+                                  : lang === "ru" ? `+ Доставка $${DELIVERY_FEE_USD}` : `+ Delivery $${DELIVERY_FEE_USD}`}
+                              </button>
                             </div>
                           )}
                         </div>
