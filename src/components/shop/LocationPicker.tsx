@@ -48,8 +48,8 @@ export const LocationPicker = ({ onPicked, showBack, onBack }: LocationPickerPro
       <h2 className="font-display font-extrabold text-2xl">
         {country ? (
           <span className="flex items-center gap-2">
-            <span>{country.name[lang]}</span>
             <span>{country.flag}</span>
+            <span>{country.name[lang]}</span>
           </span>
         ) : (
           t("loc.title")
