@@ -73,7 +73,7 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
     <Sheet open={!!product} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="rounded-t-3xl border-0 p-0 max-h-[90vh] flex flex-col bg-background"
+        className="rounded-t-3xl border-0 p-0 max-h-[90vh] flex flex-col bg-background [&>button.absolute]:hidden"
       >
         {/* Top image */}
         <div
