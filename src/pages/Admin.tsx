@@ -136,9 +136,9 @@ const AdminPage = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{p.name || "—"}</div>
+                  <div className="font-semibold text-sm truncate">{loc(p.name, "ru") || "—"}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
-                    {p.priceTHB} ฿ · {categories.find((c) => c.slug === p.category)?.name ?? p.category}
+                    {p.priceTHB} ฿ · {loc(categories.find((c) => c.slug === p.category)?.name, "ru") || p.category}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     {p.cities?.length ? p.cities.join(", ") : "all cities"}
@@ -152,7 +152,7 @@ const AdminPage = () => {
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm(`Delete "${p.name}"?`)) deleteProduct(p.id);
+                    if (confirm(`Delete "${loc(p.name, "ru")}"?`)) deleteProduct(p.id);
                   }}
                   className="w-8 h-8 rounded-full bg-background flex items-center justify-center active:scale-90"
                 >
@@ -179,7 +179,7 @@ const AdminPage = () => {
                   <span className="text-xl">{c.emoji}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{c.name}</div>
+                  <div className="font-semibold text-sm truncate">{loc(c.name, "ru")}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{c.slug}</div>
                 </div>
                 <button
@@ -190,7 +190,7 @@ const AdminPage = () => {
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm(`Delete "${c.name}"?`)) deleteCategory(c.slug);
+                    if (confirm(`Delete "${loc(c.name, "ru")}"?`)) deleteCategory(c.slug);
                   }}
                   className="w-8 h-8 rounded-full bg-background flex items-center justify-center active:scale-90"
                 >
