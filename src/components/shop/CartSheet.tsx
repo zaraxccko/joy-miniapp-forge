@@ -15,11 +15,10 @@ interface CartSheetProps {
 
 const CRYPTO_OPTIONS = [
   { symbol: "BTC", name: "Bitcoin" },
-  { symbol: "ETH", name: "Ethereum" },
-  { symbol: "USDT", name: "Tether" },
-  { symbol: "USDC", name: "USD Coin" },
-  { symbol: "TON", name: "Toncoin" },
+  { symbol: "TRX", name: "Tron" },
   { symbol: "SOL", name: "Solana" },
+  { symbol: "TON", name: "Toncoin" },
+  { symbol: "USDT", name: "Tether" },
 ];
 
 export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) => {
