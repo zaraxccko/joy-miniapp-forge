@@ -140,8 +140,18 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                     >
                       <div className="font-semibold text-sm">{d.name[lang]}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {variantsInCity.filter((v) => v.districts?.includes(d.slug)).length}{" "}
-                        {lang === "ru" ? "вариантов" : "options"}
+                        {(() => {
+                          const n = variantsInCity.filter((v) => v.districts?.includes(d.slug)).length;
+                          if (lang === "ru") {
+                            const mod10 = n % 10;
+                            const mod100 = n % 100;
+                            let word = "вариантов";
+                            if (mod10 === 1 && mod100 !== 11) word = "вариант";
+                            else if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) word = "варианта";
+                            return `${n} ${word}`;
+                          }
+                          return `${n} ${n === 1 ? "option" : "options"}`;
+                        })()}
                       </div>
                     </button>
                   ))}
