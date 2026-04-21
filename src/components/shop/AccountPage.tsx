@@ -20,7 +20,8 @@ const statusMeta = {
 } as const;
 
 const depStatusMeta = {
-  pending:   { ru: "Ожидает",      en: "Pending",   cls: "bg-amber-500/15 text-amber-600" },
+  pending:   { ru: "Не оплачен",   en: "Unpaid",    cls: "bg-muted text-muted-foreground" },
+  awaiting:  { ru: "Ожидает",      en: "Pending",   cls: "bg-amber-500/15 text-amber-600" },
   confirmed: { ru: "Зачислено",    en: "Confirmed", cls: "bg-emerald-500/15 text-emerald-600" },
   cancelled: { ru: "Отменено",     en: "Cancelled", cls: "bg-muted text-muted-foreground" },
 } as const;
