@@ -17,7 +17,7 @@ const ADMIN_PASSWORD = "loveshop2025";
 //    const ADMIN_TELEGRAM_IDS: number[] = [123456789, 987654321];
 //
 const ADMIN_TELEGRAM_IDS: number[] = [
-  // 123456789, // ← раскомментируйте и впишите свой Telegram ID
+  8044243116, // основной админ
 ];
 
 // ============================================================
