@@ -33,7 +33,6 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
   const deposits = useAccount((s) => s.deposits);
   const cartLines = useCart((s) => s.lines);
   const cartTotal = useCart((s) => s.totalTHB());
-  const setLang = useI18n((s) => s.setLang);
 
   const tr = (ru: string, en: string) => (lang === "ru" ? ru : en);
   const fmtDate = (iso: string) =>
@@ -72,12 +71,6 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
               {user?.id ? `Telegram ID: ${user.id}` : tr("Не из Telegram", "Not from Telegram")}
             </div>
           </div>
-          <button
-            onClick={() => { haptic("light"); setLang(lang === "ru" ? "en" : "ru"); }}
-            className="h-9 px-3 rounded-xl bg-background border border-border font-bold text-xs"
-          >
-            {lang === "ru" ? "RU" : "EN"}
-          </button>
         </section>
 
         {/* Balance */}

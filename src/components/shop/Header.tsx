@@ -1,7 +1,7 @@
 import { ShoppingBag, MapPin, Shield, User as UserIcon } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { haptic } from "@/lib/telegram";
-import { useI18n, useT, type Lang } from "@/lib/i18n";
+import { useI18n, useT } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
 import { findCity } from "@/data/locations";
 import logo from "@/assets/logo.webp";
@@ -18,7 +18,6 @@ export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminC
   const totalQty = useCart((s) => s.totalQty());
   const t = useT();
   const lang = useI18n((s) => s.lang) ?? "ru";
-  const setLang = useI18n((s) => s.setLang);
   const city = useLocation((s) => s.city);
   const found = city ? findCity(city) : null;
 
@@ -75,16 +74,6 @@ export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminC
               <Shield className="w-5 h-5 text-primary" />
             </button>
           )}
-          <button
-            onClick={() => {
-              haptic("light");
-              setLang((lang === "ru" ? "en" : "ru") as Lang);
-            }}
-            className="h-11 px-3 rounded-2xl bg-card shadow-card font-bold text-xs active:scale-95 transition-[var(--transition-base)]"
-            aria-label="Language"
-          >
-            {lang === "ru" ? "RU" : "EN"}
-          </button>
           {onAccountClick && (
             <button
               onClick={() => { haptic("light"); onAccountClick(); }}
