@@ -165,3 +165,13 @@ export const findCity = (citySlug: string) => {
   }
   return null;
 };
+
+export const findDistrict = (districtSlug: string): District | null => {
+  for (const c of COUNTRIES) {
+    for (const city of c.cities) {
+      const d = city.districts?.find((x) => x.slug === districtSlug);
+      if (d) return d;
+    }
+  }
+  return null;
+};
