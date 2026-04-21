@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Header } from "@/components/shop/Header";
 import { Hero } from "@/components/shop/Hero";
@@ -12,15 +12,26 @@ import { useTelegram } from "@/lib/telegram";
 import { useI18n, useT } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
 import { useCatalog } from "@/store/catalog";
-
+import { useAuth } from "@/store/auth";
+import AdminPage from "./Admin";
 
 const Index = () => {
-  useTelegram();
   const t = useT();
   const lang = useI18n((s) => s.lang);
   const city = useLocation((s) => s.city);
   const products = useCatalog((s) => s.products);
   const categories = useCatalog((s) => s.categories);
+
+  const { user } = useTelegram();
+  const { isAdmin, loginWithTelegram, logout } = useAuth();
+
+  // Auto-login admins by their Telegram ID. Non-whitelisted users never
+  // see anything admin-related — they get the regular shop.
+  useEffect(() => {
+    if (user?.id) loginWithTelegram(user.id);
+    // If the Telegram user changes / logs out, drop admin state
+    if (!user?.id && isAdmin) logout();
+  }, [user?.id, isAdmin, loginWithTelegram, logout]);
 
   const [category, setCategory] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
@@ -43,6 +54,9 @@ const Index = () => {
     () => (category === "all" ? cityProducts : cityProducts.filter((p) => p.category === category)),
     [cityProducts, category]
   );
+
+  // Admins (whitelisted Telegram IDs) get the admin panel instead of the shop.
+  if (isAdmin) return <AdminPage />;
 
   if (!lang) return <SplashLanguage onPicked={() => {}} />;
   if (!city || showLocPicker)
