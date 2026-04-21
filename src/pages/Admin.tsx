@@ -100,8 +100,32 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
   const activeCountry = COUNTRIES.find((c) => c.slug === selectedCountry);
   const activeCity = allCities.find((c) => c.slug === selectedCity);
 
+  // Standalone deposits view (not tied to geo)
+  if (selectedCountry === "__deposits__") {
+    return (
+      <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
+        <header className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setSelectedCountry(null)}
+            className="w-10 h-10 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="font-display font-bold text-base flex-1 text-center">
+            Заявки на пополнение
+          </h1>
+          <span className="w-10" />
+        </header>
+        <Tabs defaultValue="deposits">
+          <DepositsTab />
+        </Tabs>
+      </div>
+    );
+  }
+
   // Geo picker — country first
   if (!selectedCountry) {
+    const awaitingCount = useAccount.getState().deposits.filter((d) => d.status === "awaiting").length;
     return (
       <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
         <header className="flex items-center justify-between mb-6">
@@ -114,6 +138,29 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
           <h1 className="font-display font-bold text-base">{t("admin.title")}</h1>
           <span className="w-10" />
         </header>
+
+        <button
+          onClick={() => setSelectedCountry("__deposits__")}
+          className="w-full bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] flex items-center gap-3 mb-4 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-2xl shrink-0">
+            💸
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-sm">Заявки на пополнение</div>
+            <div className="text-[11px] text-muted-foreground">
+              {awaitingCount > 0
+                ? `${awaitingCount} ждут подтверждения`
+                : "Нет новых заявок"}
+            </div>
+          </div>
+          {awaitingCount > 0 && (
+            <span className="text-[11px] font-bold gradient-primary text-primary-foreground rounded-full px-2 py-1">
+              {awaitingCount}
+            </span>
+          )}
+        </button>
+
         <h2 className="font-display font-extrabold text-2xl flex items-center gap-2">
           <MapPin className="w-5 h-5" /> Выберите страну
         </h2>
