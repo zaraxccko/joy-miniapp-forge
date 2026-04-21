@@ -27,8 +27,24 @@ export const COUNTRIES: Country[] = [
     name: { ru: "Тайланд", en: "Thailand" },
     shortName: { ru: "Тай", en: "Thai" },
     cities: [
-      { slug: "phuket", name: { ru: "Пхукет", en: "Phuket" } },
-      { slug: "bangkok", name: { ru: "Бангкок", en: "Bangkok" } },
+      {
+        slug: "phuket",
+        name: { ru: "Пхукет", en: "Phuket" },
+        districts: [
+          { slug: "phuket-patong", name: { ru: "Патонг", en: "Patong" } },
+          { slug: "phuket-kata", name: { ru: "Ката", en: "Kata" } },
+          { slug: "phuket-rawai", name: { ru: "Раваи", en: "Rawai" } },
+        ],
+      },
+      {
+        slug: "bangkok",
+        name: { ru: "Бангкок", en: "Bangkok" },
+        districts: [
+          { slug: "bkk-sukhumvit", name: { ru: "Сукхумвит", en: "Sukhumvit" } },
+          { slug: "bkk-silom", name: { ru: "Силом", en: "Silom" } },
+          { slug: "bkk-thonglor", name: { ru: "Тхонглор", en: "Thonglor" } },
+        ],
+      },
       { slug: "pattaya", name: { ru: "Паттайя", en: "Pattaya" } },
       { slug: "samui", name: { ru: "Самуи", en: "Samui" } },
     ],
