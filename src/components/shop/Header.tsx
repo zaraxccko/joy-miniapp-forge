@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, Shield } from "lucide-react";
+import { ShoppingBag, MapPin, Shield, User as UserIcon } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { haptic } from "@/lib/telegram";
 import { useI18n, useT, type Lang } from "@/lib/i18n";
@@ -11,9 +11,10 @@ interface HeaderProps {
   onLocationClick: () => void;
   showAdminButton?: boolean;
   onAdminClick?: () => void;
+  onAccountClick?: () => void;
 }
 
-export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminClick }: HeaderProps) => {
+export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminClick, onAccountClick }: HeaderProps) => {
   const totalQty = useCart((s) => s.totalQty());
   const t = useT();
   const lang = useI18n((s) => s.lang) ?? "ru";
@@ -84,6 +85,15 @@ export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminC
           >
             {lang === "ru" ? "RU" : "EN"}
           </button>
+          {onAccountClick && (
+            <button
+              onClick={() => { haptic("light"); onAccountClick(); }}
+              className="w-11 h-11 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95 transition-[var(--transition-base)]"
+              aria-label="Account"
+            >
+              <UserIcon className="w-5 h-5 text-foreground" />
+            </button>
+          )}
           <button
             data-cart-target
             onClick={() => {

@@ -9,12 +9,17 @@ import { StickyCartBar } from "@/components/shop/StickyCartBar";
 import { SplashLanguage } from "@/components/shop/SplashLanguage";
 import { LocationPicker } from "@/components/shop/LocationPicker";
 import { ProductSheet } from "@/components/shop/ProductSheet";
+import { DepositPage } from "@/components/shop/DepositPage";
+import { AccountPage } from "@/components/shop/AccountPage";
 import { useTelegram } from "@/lib/telegram";
 import { useI18n, useT } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
 import { useCatalog } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
+import { useAccount } from "@/store/account";
+import { useCart } from "@/store/cart";
 import { findCity } from "@/data/locations";
+import { toast } from "sonner";
 import type { Product } from "@/types/shop";
 import AdminPage from "./Admin";
 
@@ -47,6 +52,52 @@ const Index = () => {
   const [showLocPicker, setShowLocPicker] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [showAccount, setShowAccount] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [depositSuggested, setDepositSuggested] = useState<number | undefined>(undefined);
+
+  const balance = useAccount((s) => s.balanceUSD);
+  const spend = useAccount((s) => s.spend);
+  const addOrder = useAccount((s) => s.addOrder);
+  const cartLines = useCart((s) => s.lines);
+  const cartTotal = useCart((s) => s.totalTHB());
+  const cartDelivery = useCart((s) => s.delivery);
+  const cartAddress = useCart((s) => s.deliveryAddress);
+  const clearCart = useCart((s) => s.clear);
+
+  const handleCheckout = () => {
+    if (cartLines.length === 0) return;
+    if (cartDelivery && !cartAddress.trim()) {
+      toast.error(lang === "en" ? "Please enter delivery address" : "Укажите адрес доставки");
+      return;
+    }
+    if (balance < cartTotal) {
+      const shortfall = Math.max(0, cartTotal - balance);
+      setDepositSuggested(shortfall);
+      setCartOpen(false);
+      setDepositOpen(true);
+      toast(
+        lang === "en"
+          ? `Top up $${shortfall} to complete the order`
+          : `Пополните баланс на $${shortfall} для оформления`
+      );
+      return;
+    }
+    if (!spend(cartTotal)) {
+      toast.error(lang === "en" ? "Not enough balance" : "Недостаточно средств");
+      return;
+    }
+    addOrder({
+      totalUSD: cartTotal,
+      items: cartLines,
+      delivery: cartDelivery,
+      deliveryAddress: cartDelivery ? cartAddress : undefined,
+    });
+    clearCart();
+    setCartOpen(false);
+    toast.success(lang === "en" ? "Order placed!" : "Заказ оформлен!");
+    setShowAccount(true);
+  };
 
   const cityInfo = city ? findCity(city) : null;
 
@@ -93,6 +144,23 @@ const Index = () => {
       />
     );
 
+  if (depositOpen)
+    return (
+      <DepositPage
+        suggested={depositSuggested}
+        onBack={() => { setDepositOpen(false); setDepositSuggested(undefined); }}
+      />
+    );
+
+  if (showAccount)
+    return (
+      <AccountPage
+        onBack={() => setShowAccount(false)}
+        onTopUp={() => { setShowAccount(false); setDepositSuggested(undefined); setDepositOpen(true); }}
+        onOpenCart={() => { setShowAccount(false); setCartOpen(true); }}
+      />
+    );
+
   return (
     <div className="min-h-screen max-w-md mx-auto bg-background">
       <Header
@@ -100,6 +168,7 @@ const Index = () => {
         onLocationClick={() => setShowLocPicker(true)}
         showAdminButton={isAdmin}
         onAdminClick={() => setShowAdmin(true)}
+        onAccountClick={() => setShowAccount(true)}
       />
 
       <main className="pb-32">
@@ -137,10 +206,7 @@ const Index = () => {
       <CartSheet
         open={cartOpen}
         onOpenChange={setCartOpen}
-        onCheckout={() => {
-          setCartOpen(false);
-          alert("Checkout — next step 🙂");
-        }}
+        onCheckout={handleCheckout}
       />
       <ProductSheet
         product={openProduct}
