@@ -6,7 +6,7 @@ import { haptic } from "@/lib/telegram";
 import { useI18n, useT, type Lang } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
 import { findCity } from "@/data/locations";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -43,6 +43,12 @@ export const Header = ({ onCartClick, onLocationClick }: HeaderProps) => {
           <img
             src={logo}
             alt="Love Shop"
+            width={44}
+            height={44}
+            loading="eager"
+            decoding="async"
+            // @ts-expect-error fetchpriority is a valid HTML attribute
+            fetchpriority="high"
             onClick={handleLogoTap}
             className="w-11 h-11 rounded-2xl object-cover shadow-soft shrink-0 cursor-pointer select-none"
           />

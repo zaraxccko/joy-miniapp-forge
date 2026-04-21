@@ -1,4 +1,4 @@
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 import { useI18n, tFor, type Lang } from "@/lib/i18n";
 import { haptic } from "@/lib/telegram";
 

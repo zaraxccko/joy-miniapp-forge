@@ -4,7 +4,7 @@ import { COUNTRIES, type Country } from "@/data/locations";
 import { useLocation } from "@/store/location";
 import { useI18n, useT } from "@/lib/i18n";
 import { haptic } from "@/lib/telegram";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 
 interface LocationPickerProps {
   onPicked: () => void;
