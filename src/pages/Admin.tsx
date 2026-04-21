@@ -425,10 +425,20 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                     value={editingP.gradient}
                     onValueChange={(v) => setEditingP({ ...editingP, gradient: v })}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-5 h-5 rounded-md shrink-0 ${editingP.gradient}`} />
+                        <span className="truncate">{editingP.gradient}</span>
+                      </div>
+                    </SelectTrigger>
                     <SelectContent>
                       {GRADIENTS.map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                        <SelectItem key={g} value={g}>
+                          <span className="flex items-center gap-2">
+                            <span className={`w-5 h-5 rounded-md ${g}`} />
+                            {g}
+                          </span>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -838,10 +848,20 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                     value={editingC.gradient}
                     onValueChange={(v) => setEditingC({ ...editingC, gradient: v })}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-5 h-5 rounded-md shrink-0 ${editingC.gradient}`} />
+                        <span className="truncate">{editingC.gradient}</span>
+                      </div>
+                    </SelectTrigger>
                     <SelectContent>
                       {GRADIENTS.map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                        <SelectItem key={g} value={g}>
+                          <span className="flex items-center gap-2">
+                            <span className={`w-5 h-5 rounded-md ${g}`} />
+                            {g}
+                          </span>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
