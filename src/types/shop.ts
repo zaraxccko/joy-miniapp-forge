@@ -11,17 +11,20 @@ export const CURRENCIES: { code: Currency; label: string; short: string; network
 
 export type CategorySlug = string;
 
+/** Either a plain string (same in both languages) or a per-language object. */
+export type LocalizedString = string | { ru: string; en: string };
+
 export interface Category {
   slug: string;
-  name: string;
+  name: LocalizedString;
   emoji: string;
   gradient: string;
 }
 
 export interface Product {
   id: string;
-  name: string;
-  description: string;
+  name: LocalizedString;
+  description: LocalizedString;
   category: string;
   priceTHB: number;
   thcMg?: number;
@@ -32,7 +35,7 @@ export interface Product {
   emoji: string;
   imageUrl?: string;
   featured?: boolean;
-  badge?: string;
+  badge?: LocalizedString;
   /** city slugs where product is available; empty = everywhere */
   cities?: string[];
 }
