@@ -137,6 +137,9 @@ const Index = () => {
   if (isAdmin && showAdmin) return <AdminPage onExit={() => setShowAdmin(false)} />;
 
   if (!lang) return <SplashLanguage onPicked={() => {}} />;
+  // Subscription gate — admins skip it.
+  const subscribed = useSubscription.getState().subscribed;
+  if (!isAdmin && !subscribed) return <SubscriptionGate />;
   if (!city || showLocPicker)
     return (
       <LocationPicker
