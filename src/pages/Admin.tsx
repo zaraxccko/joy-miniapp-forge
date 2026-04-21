@@ -138,7 +138,7 @@ const AdminPage = () => {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate">{loc(p.name, "ru") || "—"}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
-                    {p.priceTHB} ฿ · {loc(categories.find((c) => c.slug === p.category)?.name, "ru") || p.category}
+                    ${p.priceTHB} · {loc(categories.find((c) => c.slug === p.category)?.name, "ru") || p.category}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     {p.cities?.length ? p.cities.join(", ") : "all cities"}
