@@ -44,10 +44,18 @@ export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
         )}
       </button>
       <div className="p-3 flex-1 flex flex-col">
-        <div className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">
-          {name}
-        </div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">{product.weight}</div>
+        <button
+          onClick={() => onOpen?.(product)}
+          className="text-left active:opacity-70 transition-opacity"
+        >
+          <div className="text-[13px] font-semibold leading-tight line-clamp-2 min-h-[2.4em]">
+            {name}
+          </div>
+          <div className="text-[11px] text-primary mt-0.5 font-medium flex items-center gap-1">
+            {lang === "ru" ? "Подробнее" : "View details"}
+            <span aria-hidden>→</span>
+          </div>
+        </button>
         <div className="flex items-center justify-between mt-2">
           <div className="font-bold text-sm">{formatTHB(product.priceTHB)}</div>
           <button
