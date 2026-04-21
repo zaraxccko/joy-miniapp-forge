@@ -186,8 +186,8 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-muted-foreground">{tr("Способ", "Method")}</div>
-                  <div className="font-bold">{cryptoMeta.code}</div>
-                  <div className="text-[11px] text-muted-foreground">{cryptoMeta.network}</div>
+                  <div className="font-bold">{cryptoMeta.name}</div>
+                  <div className="text-[11px] text-muted-foreground">{tr("Сеть", "Network")}: {cryptoMeta.network}</div>
                 </div>
               </div>
             </div>
@@ -232,14 +232,34 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-foreground/80 flex gap-2 items-start">
-                  <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <span>
-                    {tr(
-                      "Отправьте указанную сумму на адрес выше. После оплаты нажмите кнопку ниже — заявка уйдёт админу на подтверждение.",
-                      "Send the exact amount to the address above. Then tap the button below — your request will be sent to the admin for confirmation."
-                    )}
-                  </span>
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-foreground/80 space-y-1.5">
+                  <div className="flex gap-2 items-start">
+                    <span className="text-primary font-bold">⚠️</span>
+                    <span>
+                      {tr(
+                        `Отправляйте только ${cryptoMeta.name} в сети ${cryptoMeta.network}. Если выберете другую сеть — монеты потеряются.`,
+                        `Send only ${cryptoMeta.name} on the ${cryptoMeta.network} network. Using a different network will result in lost funds.`
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <span className="text-primary font-bold">💸</span>
+                    <span>
+                      {tr(
+                        "Сеть берёт небольшую комиссию за перевод — учтите её, чтобы дошла нужная сумма.",
+                        "The network charges a small fee for the transfer — keep that in mind so the full amount arrives."
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <span className="text-primary font-bold">✅</span>
+                    <span>
+                      {tr(
+                        "После оплаты нажмите кнопку ниже — заявка уйдёт админу на подтверждение.",
+                        "After paying, tap the button below — your request will be sent to the admin for confirmation."
+                      )}
+                    </span>
+                  </div>
                 </div>
 
                 <button

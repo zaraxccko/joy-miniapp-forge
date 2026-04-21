@@ -5,11 +5,11 @@ import type { CartLine } from "@/types/shop";
 export type CryptoCode = "BTC" | "TRX" | "SOL" | "TON" | "USDT";
 
 export const CRYPTO_LIST: { code: CryptoCode; name: string; network: string; address: string }[] = [
-  { code: "USDT", name: "Tether",  network: "TRC-20", address: "TXkjN3p8VxxxxxxxxxxxxxxxxxxxxxxxYZ" },
-  { code: "TRX",  name: "Tron",    network: "TRX",    address: "TRX9aB2cDxxxxxxxxxxxxxxxxxxxxxxxxK" },
-  { code: "BTC",  name: "Bitcoin", network: "BTC",    address: "bc1qexampleaddressxxxxxxxxxxxxxxxx" },
-  { code: "SOL",  name: "Solana",  network: "SOL",    address: "So1aNaExampleAddressxxxxxxxxxxxxxx" },
-  { code: "TON",  name: "Toncoin", network: "TON",    address: "UQAexampleTONaddressxxxxxxxxxxxxxx" },
+  { code: "USDT", name: "Tether",  network: "TRC-20", address: "TXkjN3p8VsHc4yQ2mLp9wRfBdK7tA1nZsY" },
+  { code: "TRX",  name: "Tron",    network: "TRC-20", address: "TRX9aB2cDfGhJkLmNpQrStUvWxYz123aBcK" },
+  { code: "BTC",  name: "Bitcoin", network: "Bitcoin", address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" },
+  { code: "SOL",  name: "Solana",  network: "Solana", address: "So1aNaWa11etExamp1eAddressFor1usttest1ng" },
+  { code: "TON",  name: "Toncoin", network: "TON",    address: "UQAvDfTONwa11etExampleAddressForTesting12" },
 ];
 
 /**
