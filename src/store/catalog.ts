@@ -50,6 +50,6 @@ export const useCatalog = create<CatalogState>()(
         set((s) => ({ categories: s.categories.filter((c) => c.slug !== slug) })),
       reset: () => set({ categories: DEFAULT_CATEGORIES, products: DEFAULT_PRODUCTS }),
     }),
-    { name: "loveshop-catalog-v1" }
+    { name: "loveshop-catalog-v2" }
   )
 );
