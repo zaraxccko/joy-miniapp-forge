@@ -222,12 +222,6 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
                 >
                   {tr("Готово", "Done")}
                 </button>
-                <button
-                  onClick={cancel}
-                  className="w-full text-sm text-muted-foreground py-2 active:scale-95"
-                >
-                  {tr("Отменить заявку", "Cancel request")}
-                </button>
               </>
             ) : (
               <>
