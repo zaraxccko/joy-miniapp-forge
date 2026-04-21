@@ -9,6 +9,8 @@ export interface Country {
   slug: CountrySlug;
   flag: string;
   name: { ru: string; en: string };
+  /** Optional short label shown as the picker heading (e.g. "Тай" instead of "Тайланд"). */
+  shortName?: { ru: string; en: string };
   cities: City[];
 }
 
@@ -17,6 +19,7 @@ export const COUNTRIES: Country[] = [
     slug: "thailand",
     flag: "🇹🇭",
     name: { ru: "Тайланд", en: "Thailand" },
+    shortName: { ru: "Тай", en: "Thai" },
     cities: [
       { slug: "phuket", name: { ru: "Пхукет", en: "Phuket" } },
       { slug: "bangkok", name: { ru: "Бангкок", en: "Bangkok" } },
@@ -28,6 +31,7 @@ export const COUNTRIES: Country[] = [
     slug: "vietnam",
     flag: "🇻🇳",
     name: { ru: "Вьетнам", en: "Vietnam" },
+    shortName: { ru: "Вьет", en: "Viet" },
     cities: [
       { slug: "hochiminh", name: { ru: "Хошимин", en: "Ho Chi Minh" } },
       { slug: "danang", name: { ru: "Дананг", en: "Da Nang" } },

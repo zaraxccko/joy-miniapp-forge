@@ -46,7 +46,14 @@ export const LocationPicker = ({ onPicked, showBack, onBack }: LocationPickerPro
       </div>
 
       <h2 className="font-display font-extrabold text-2xl">
-        {country ? t("loc.pickCity") : t("loc.title")}
+        {country ? (
+          <span className="flex items-center gap-2">
+            <span>{country.flag}</span>
+            <span>{country.shortName?.[lang] ?? country.name[lang]}</span>
+          </span>
+        ) : (
+          t("loc.title")
+        )}
       </h2>
       <p className="text-muted-foreground text-sm mt-1 mb-6">{t("loc.subtitle")}</p>
 
@@ -80,7 +87,6 @@ export const LocationPicker = ({ onPicked, showBack, onBack }: LocationPickerPro
               onClick={() => choose(city.slug)}
               className="w-full bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] transition-[var(--transition-base)] flex items-center gap-3"
             >
-              <span className="text-2xl">{country.flag}</span>
               <span className="font-bold">{city.name[lang]}</span>
             </button>
           ))}
