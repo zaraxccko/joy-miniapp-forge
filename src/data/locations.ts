@@ -10,15 +10,6 @@ export interface Country {
   flag: string;
   name: { ru: string; en: string };
   cities: City[];
-  /** Local currency settings. Prices are stored in THB and converted at render time. */
-  currency: {
-    code: string;       // ISO-like, e.g. "THB", "IDR", "VND", "MYR"
-    symbol: string;     // displayed symbol, e.g. "฿", "Rp", "₫", "RM"
-    /** How many local units = 1 THB */
-    perTHB: number;
-    /** Round price to nearest N units in local currency. */
-    roundTo?: number;
-  };
 }
 
 export const COUNTRIES: Country[] = [
