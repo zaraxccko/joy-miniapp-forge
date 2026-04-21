@@ -83,10 +83,19 @@ export const useAccount = create<AccountState>()(
         return dep;
       },
 
+      markPaid: (id) =>
+        set((s) => ({
+          deposits: s.deposits.map((d) =>
+            d.id === id && d.status === "pending"
+              ? { ...d, status: "awaiting", paidAt: new Date().toISOString() }
+              : d
+          ),
+        })),
+
       confirmDeposit: (id) =>
         set((s) => {
           const dep = s.deposits.find((d) => d.id === id);
-          if (!dep || dep.status !== "pending") return s;
+          if (!dep || (dep.status !== "awaiting" && dep.status !== "pending")) return s;
           return {
             deposits: s.deposits.map((d) =>
               d.id === id ? { ...d, status: "confirmed", confirmedAt: new Date().toISOString() } : d
@@ -98,7 +107,9 @@ export const useAccount = create<AccountState>()(
       cancelDeposit: (id) =>
         set((s) => ({
           deposits: s.deposits.map((d) =>
-            d.id === id && d.status === "pending" ? { ...d, status: "cancelled" } : d
+            d.id === id && (d.status === "pending" || d.status === "awaiting")
+              ? { ...d, status: "cancelled" }
+              : d
           ),
         })),
 
