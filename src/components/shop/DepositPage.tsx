@@ -219,7 +219,10 @@ export const DepositPage = ({ onBack, onDone, suggested }: DepositPageProps) => 
                   </span>
                 </div>
                 <button
-                  onClick={() => setPendingId(null)}
+                  onClick={() => {
+                    setPendingId(null);
+                    (onDone ?? onBack)();
+                  }}
                   className="w-full bg-card border border-border font-bold py-4 rounded-2xl active:scale-[0.98]"
                 >
                   {tr("Готово", "Done")}
