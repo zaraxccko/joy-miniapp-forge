@@ -38,6 +38,8 @@ export interface Product {
   badge?: LocalizedString;
   /** city slugs where product is available; empty = everywhere */
   cities?: string[];
+  /** district slugs where product is available; empty = all districts of selected cities */
+  districts?: string[];
 }
 
 export interface CartLine {
