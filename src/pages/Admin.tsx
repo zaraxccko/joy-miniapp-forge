@@ -450,6 +450,8 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                     }
                   />
                 </div>
+                <div>
+                  <Label>{t("admin.weight")}</Label>
                   <Input
                     value={editingP.weight ?? ""}
                     onChange={(e) => setEditingP({ ...editingP, weight: e.target.value })}
