@@ -43,7 +43,8 @@ export const Header = ({ onCartClick, onLocationClick }: HeaderProps) => {
           <img
             src={logo}
             alt="Love Shop"
-            className="w-11 h-11 rounded-2xl object-cover shadow-soft shrink-0"
+            onClick={handleLogoTap}
+            className="w-11 h-11 rounded-2xl object-cover shadow-soft shrink-0 cursor-pointer select-none"
           />
           <div className="min-w-0">
             <div className="font-display font-bold text-lg leading-none truncate">Love Shop</div>
