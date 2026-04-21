@@ -642,7 +642,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                           }
                           className="text-xs bg-muted rounded-full px-2 py-1 active:scale-95"
                         >
-                          + {g}г
+                          + {g}g
                         </button>
                       ))}
                       <button
@@ -677,7 +677,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                             className="bg-muted/50 rounded-xl p-3 space-y-2"
                           >
                             <div className="flex items-center justify-between">
-                              <div className="font-bold text-sm">{variant.grams}г</div>
+                              <div className="font-bold text-sm">{variant.grams}g</div>
                               <button
                                 type="button"
                                 onClick={() =>

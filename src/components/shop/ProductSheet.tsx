@@ -187,12 +187,12 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                         className="bg-card rounded-2xl p-3 shadow-card flex items-center gap-3"
                       >
                         <div className="flex-1 flex items-baseline gap-2 flex-wrap">
-                          <div className="font-bold text-base">{v.grams}г</div>
+                          <div className="font-bold text-base">{v.grams}g</div>
                           <div className="text-sm text-muted-foreground">·</div>
                           <div className="text-sm font-semibold text-foreground">${price}</div>
                           {v.grams >= 5 && (
                             <span className="text-[10px] font-bold uppercase tracking-wide text-primary bg-primary/10 rounded-full px-2 py-0.5">
-                              🎁 +5г {lang === "ru" ? "в подарок" : "free"}
+                              🎁 +5g Free
                             </span>
                           )}
                         </div>
