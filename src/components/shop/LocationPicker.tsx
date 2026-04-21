@@ -91,7 +91,7 @@ export const LocationPicker = ({ onPicked, showBack, onBack }: LocationPickerPro
         <button
           onClick={() => {
             haptic("light");
-            setLang(null as unknown as never);
+            setLang(null);
           }}
           className="mt-8 mx-auto text-xs text-muted-foreground underline-offset-4 hover:underline active:scale-95"
         >
