@@ -21,7 +21,7 @@ const CRYPTO_OPTIONS = [
 ];
 
 export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) => {
-  const lines = useCart((s) => s.lines);
+  const lines = useCart((s) => s.linesWithGifts());
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
   const total = useCart((s) => s.totalTHB());
@@ -52,18 +52,22 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
                 const key = lineKey(line);
                 const unit = line.priceUSD ?? line.product.priceTHB ?? 0;
                 const variantLabel = line.variantId ? ` · ${line.variantId}` : "";
+                const isGift = line.isGift;
                 return (
                   <div
                     key={key}
-                    className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-card"
+                    className={`bg-card rounded-2xl p-3 flex items-center gap-3 shadow-card ${isGift ? "border border-primary/30" : ""}`}
                   >
                     <div
-                      className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${!line.product.imageUrl ? line.product.gradient : ""}`}
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative ${!line.product.imageUrl ? line.product.gradient : ""}`}
                     >
                       {line.product.imageUrl ? (
                         <img src={line.product.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-3xl">{line.product.emoji}</span>
+                      )}
+                      {isGift && (
+                        <span className="absolute -top-1 -right-1 text-lg">🎁</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -71,38 +75,46 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
                         {loc(line.product.name, lang)}
                         <span className="text-muted-foreground font-normal">{variantLabel}</span>
                       </div>
-                      <div className="text-primary font-bold text-sm mt-1">
-                        {formatTHB(unit * line.qty)}
+                      {isGift ? (
+                        <div className="text-primary font-bold text-xs mt-1 uppercase tracking-wide">
+                          {lang === "ru" ? `Подарок × ${line.qty}` : `Gift × ${line.qty}`}
+                        </div>
+                      ) : (
+                        <div className="text-primary font-bold text-sm mt-1">
+                          {formatTHB(unit * line.qty)}
+                        </div>
+                      )}
+                    </div>
+                    {!isGift && (
+                      <div className="flex items-center gap-1.5 bg-background rounded-full p-1">
+                        <button
+                          onClick={() => {
+                            haptic("light");
+                            if (line.qty === 1) remove(key);
+                            else setQty(key, line.qty - 1);
+                          }}
+                          className="w-7 h-7 rounded-full bg-card flex items-center justify-center active:scale-90 transition-[var(--transition-base)]"
+                          aria-label="-"
+                        >
+                          {line.qty === 1 ? (
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          ) : (
+                            <Minus className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <span className="w-5 text-center font-bold text-sm">{line.qty}</span>
+                        <button
+                          onClick={() => {
+                            haptic("light");
+                            setQty(key, line.qty + 1);
+                          }}
+                          className="w-7 h-7 rounded-full gradient-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-[var(--transition-base)] disabled:opacity-40"
+                          aria-label="+"
+                        >
+                          <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-background rounded-full p-1">
-                      <button
-                        onClick={() => {
-                          haptic("light");
-                          if (line.qty === 1) remove(key);
-                          else setQty(key, line.qty - 1);
-                        }}
-                        className="w-7 h-7 rounded-full bg-card flex items-center justify-center active:scale-90 transition-[var(--transition-base)]"
-                        aria-label="-"
-                      >
-                        {line.qty === 1 ? (
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        ) : (
-                          <Minus className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                      <span className="w-5 text-center font-bold text-sm">{line.qty}</span>
-                      <button
-                        onClick={() => {
-                          haptic("light");
-                          setQty(key, line.qty + 1);
-                        }}
-                        className="w-7 h-7 rounded-full gradient-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-[var(--transition-base)] disabled:opacity-40"
-                        aria-label="+"
-                      >
-                        <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-                      </button>
-                    </div>
+                    )}
                   </div>
                 );
               })}
