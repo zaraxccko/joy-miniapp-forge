@@ -268,6 +268,14 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                   </div>
                 </div>
                 <button
+                  onClick={() => upsertProduct({ ...p, featured: !p.featured })}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center active:scale-90 text-base ${p.featured ? "gradient-primary text-primary-foreground shadow-glow" : "bg-background text-muted-foreground"}`}
+                  aria-label="Pick of the day"
+                  title="Подборка дня"
+                >
+                  ★
+                </button>
+                <button
                   onClick={() => setEditingP(p)}
                   className="w-8 h-8 rounded-full bg-background flex items-center justify-center active:scale-90"
                 >
