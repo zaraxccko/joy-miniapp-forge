@@ -1,6 +1,7 @@
 import type { Product } from "@/types/shop";
-import { formatTHB } from "@/lib/format";
 import { useI18n, useT } from "@/lib/i18n";
+import { useLocation } from "@/store/location";
+import { findCity } from "@/data/locations";
 import { loc } from "@/lib/loc";
 
 interface HeroProps {
@@ -11,6 +12,20 @@ interface HeroProps {
 export const Hero = ({ product, onClick }: HeroProps) => {
   const t = useT();
   const lang = useI18n((s) => s.lang) ?? "ru";
+  const citySlug = useLocation((s) => s.city);
+  const countrySlug = citySlug ? findCity(citySlug)?.country.slug : undefined;
+
+  // Pick the smallest variant of >=5g available in the current country to advertise
+  // the "+5g free" promo & price. Falls back to gracefully hiding the price chip.
+  const promoVariant = (() => {
+    if (!countrySlug) return null;
+    const eligible = (product.variants ?? [])
+      .filter((v) => v.grams >= 5 && v.pricesByCountry?.[countrySlug])
+      .sort((a, b) => a.grams - b.grams);
+    return eligible[0] ?? null;
+  })();
+  const promoPrice = promoVariant?.pricesByCountry?.[countrySlug ?? ""];
+
   return (
     <button
       onClick={onClick}
@@ -35,11 +50,16 @@ export const Hero = ({ product, onClick }: HeroProps) => {
         <div className="font-display text-[22px] font-bold leading-tight text-foreground max-w-[60%]">
           {loc(product.name, lang)}
         </div>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="bg-card/90 backdrop-blur text-foreground text-xs font-bold px-3 py-1.5 rounded-full">
-            {formatTHB(product.priceTHB)}
-          </span>
-        </div>
+        {promoVariant && promoPrice != null && (
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <span className="bg-card/90 backdrop-blur text-foreground text-xs font-bold px-3 py-1.5 rounded-full">
+              {promoVariant.grams}g · ${promoPrice}
+            </span>
+            <span className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-glow">
+              🎁 +5g Free
+            </span>
+          </div>
+        )}
       </div>
     </button>
   );
