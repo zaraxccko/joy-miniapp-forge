@@ -252,7 +252,6 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
                     </span>
                   </div>
                 </div>
-                </div>
 
                 <button
                   onClick={confirmPaid}
