@@ -211,8 +211,8 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
                   <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <span>
                     {tr(
-                      "Заявка отправлена. Ожидает подтверждения — обычно 5–15 минут. Баланс пополнится автоматически.",
-                      "Submitted. Waiting for confirmation — usually 5–15 minutes. Balance will be topped up automatically."
+                      "Ожидает подтверждения",
+                      "Waiting for confirmation"
                     )}
                   </span>
                 </div>
