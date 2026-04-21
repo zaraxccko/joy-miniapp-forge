@@ -186,9 +186,10 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                         key={v.id}
                         className="bg-card rounded-2xl p-3 shadow-card flex items-center gap-3"
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 flex items-baseline gap-2">
                           <div className="font-bold text-base">{v.grams}г</div>
-                          <div className="text-xs text-muted-foreground">${price}</div>
+                          <div className="text-sm text-muted-foreground">·</div>
+                          <div className="text-sm font-semibold text-foreground">${price}</div>
                         </div>
                         <button
                           onClick={() => {
