@@ -49,6 +49,9 @@ interface AccountState {
   orders: OrderRecord[];
 
   createDeposit: (amountUSD: number, crypto: CryptoCode) => Deposit;
+  /** Юзер сообщил, что оплатил — депозит уходит на подтверждение админа. */
+  markPaid: (id: string) => void;
+  /** Админ подтверждает оплату — баланс пополняется. */
   confirmDeposit: (id: string) => void;
   cancelDeposit: (id: string) => void;
 
