@@ -10,6 +10,41 @@ import { haptic } from "@/lib/telegram";
 import { COUNTRIES, findCity } from "@/data/locations";
 import { cn } from "@/lib/utils";
 
+/** Spawns a flying emoji from the button to the cart icon in the header. */
+const flyToCart = (sourceEl: HTMLElement, emoji: string) => {
+  const target = document.querySelector<HTMLElement>("[data-cart-target]");
+  if (!target) return;
+  const from = sourceEl.getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  const startX = from.left + from.width / 2;
+  const startY = from.top + from.height / 2;
+  const endX = to.left + to.width / 2;
+  const endY = to.top + to.height / 2;
+
+  const node = document.createElement("div");
+  node.textContent = emoji;
+  node.style.cssText = `
+    position: fixed;
+    left: ${startX}px;
+    top: ${startY}px;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    z-index: 9999;
+    pointer-events: none;
+    transition: transform 0.7s cubic-bezier(0.5, -0.2, 0.7, 1), opacity 0.7s ease-out;
+    will-change: transform, opacity;
+  `;
+  document.body.appendChild(node);
+
+  // Trigger animation on next frame
+  requestAnimationFrame(() => {
+    node.style.transform = `translate(calc(-50% + ${endX - startX}px), calc(-50% + ${endY - startY}px)) scale(0.2)`;
+    node.style.opacity = "0";
+  });
+
+  setTimeout(() => node.remove(), 750);
+};
+
 interface ProductSheetProps {
   product: Product | null;
   onOpenChange: (open: boolean) => void;
@@ -197,8 +232,9 @@ export const ProductSheet = ({ product, onOpenChange }: ProductSheetProps) => {
                           )}
                         </div>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
                             haptic("medium");
+                            flyToCart(e.currentTarget, product.emoji);
                             add(product, {
                               variantId: v.id,
                               districtSlug: districtSlug ?? undefined,

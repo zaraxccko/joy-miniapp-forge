@@ -85,6 +85,7 @@ export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminC
             {lang === "ru" ? "RU" : "EN"}
           </button>
           <button
+            data-cart-target
             onClick={() => {
               haptic("light");
               onCartClick();
@@ -92,7 +93,7 @@ export const Header = ({ onCartClick, onLocationClick, showAdminButton, onAdminC
             className="relative w-11 h-11 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95 transition-[var(--transition-base)]"
             aria-label="Cart"
           >
-            <ShoppingBag className="w-5 h-5 text-foreground" />
+            <ShoppingBag key={totalQty} className={`w-5 h-5 text-foreground ${totalQty > 0 ? "animate-cart-shake" : ""}`} />
             {totalQty > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 gradient-primary text-primary-foreground text-[11px] font-bold rounded-full flex items-center justify-center shadow-glow animate-pop">
                 {totalQty}
