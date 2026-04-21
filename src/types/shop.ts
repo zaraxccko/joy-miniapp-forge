@@ -60,6 +60,12 @@ export interface Product {
 export interface CartLine {
   product: Product;
   qty: number;
+  /** Selected variant id (e.g. "1g") */
+  variantId?: string;
+  /** District where it was added */
+  districtSlug?: string;
+  /** Price snapshot at add time (USD) */
+  priceUSD?: number;
 }
 
 export type OrderStatus =

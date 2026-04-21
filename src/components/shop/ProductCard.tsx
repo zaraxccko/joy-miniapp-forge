@@ -1,8 +1,4 @@
-import { Plus } from "lucide-react";
 import type { Product } from "@/types/shop";
-import { useCart } from "@/store/cart";
-import { formatTHB } from "@/lib/format";
-import { haptic } from "@/lib/telegram";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { loc } from "@/lib/loc";
@@ -13,8 +9,6 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
-  const add = useCart((s) => s.add);
-  const qty = useCart((s) => s.lines.find((l) => l.product.id === product.id)?.qty ?? 0);
   const lang = useI18n((s) => s.lang) ?? "ru";
   const name = loc(product.name, lang);
 

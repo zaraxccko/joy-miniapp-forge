@@ -1,6 +1,6 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useCart } from "@/store/cart";
+import { useCart, lineKey } from "@/store/cart";
 import { formatTHB } from "@/lib/format";
 import { haptic } from "@/lib/telegram";
 import { useI18n, useT } from "@/lib/i18n";
@@ -48,59 +48,64 @@ export const CartSheet = ({ open, onOpenChange, onCheckout }: CartSheetProps) =>
             </div>
           ) : (
             <div className="space-y-3">
-              {lines.map((line) => (
-                <div
-                  key={line.product.id}
-                  className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-card"
-                >
+              {lines.map((line) => {
+                const key = lineKey(line);
+                const unit = line.priceUSD ?? line.product.priceTHB ?? 0;
+                const variantLabel = line.variantId ? ` · ${line.variantId}` : "";
+                return (
                   <div
-                    className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${!line.product.imageUrl ? line.product.gradient : ""}`}
+                    key={key}
+                    className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-card"
                   >
-                    {line.product.imageUrl ? (
-                      <img src={line.product.imageUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-3xl">{line.product.emoji}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm leading-tight line-clamp-2">
-                      {loc(line.product.name, lang)}
-                    </div>
-                    <div className="text-primary font-bold text-sm mt-1">
-                      {formatTHB(line.product.priceTHB * line.qty)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-background rounded-full p-1">
-                    <button
-                      onClick={() => {
-                        haptic("light");
-                        if (line.qty === 1) remove(line.product.id);
-                        else setQty(line.product.id, line.qty - 1);
-                      }}
-                      className="w-7 h-7 rounded-full bg-card flex items-center justify-center active:scale-90 transition-[var(--transition-base)]"
-                      aria-label="-"
+                    <div
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${!line.product.imageUrl ? line.product.gradient : ""}`}
                     >
-                      {line.qty === 1 ? (
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      {line.product.imageUrl ? (
+                        <img src={line.product.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <Minus className="w-3.5 h-3.5" />
+                        <span className="text-3xl">{line.product.emoji}</span>
                       )}
-                    </button>
-                    <span className="w-5 text-center font-bold text-sm">{line.qty}</span>
-                    <button
-                      onClick={() => {
-                        haptic("light");
-                        setQty(line.product.id, line.qty + 1);
-                      }}
-                      disabled={line.qty >= line.product.inStock}
-                      className="w-7 h-7 rounded-full gradient-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-[var(--transition-base)] disabled:opacity-40"
-                      aria-label="+"
-                    >
-                      <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-                    </button>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm leading-tight line-clamp-2">
+                        {loc(line.product.name, lang)}
+                        <span className="text-muted-foreground font-normal">{variantLabel}</span>
+                      </div>
+                      <div className="text-primary font-bold text-sm mt-1">
+                        {formatTHB(unit * line.qty)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-background rounded-full p-1">
+                      <button
+                        onClick={() => {
+                          haptic("light");
+                          if (line.qty === 1) remove(key);
+                          else setQty(key, line.qty - 1);
+                        }}
+                        className="w-7 h-7 rounded-full bg-card flex items-center justify-center active:scale-90 transition-[var(--transition-base)]"
+                        aria-label="-"
+                      >
+                        {line.qty === 1 ? (
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        ) : (
+                          <Minus className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <span className="w-5 text-center font-bold text-sm">{line.qty}</span>
+                      <button
+                        onClick={() => {
+                          haptic("light");
+                          setQty(key, line.qty + 1);
+                        }}
+                        className="w-7 h-7 rounded-full gradient-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-[var(--transition-base)] disabled:opacity-40"
+                        aria-label="+"
+                      >
+                        <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

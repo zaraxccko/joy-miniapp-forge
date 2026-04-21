@@ -2,11 +2,20 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartLine, Product } from "@/types/shop";
 
+const lineKey = (l: Pick<CartLine, "product" | "variantId" | "districtSlug">) =>
+  `${l.product.id}::${l.variantId ?? ""}::${l.districtSlug ?? ""}`;
+
+interface AddOptions {
+  variantId?: string;
+  districtSlug?: string;
+  priceUSD?: number;
+}
+
 interface CartState {
   lines: CartLine[];
-  add: (product: Product) => void;
-  remove: (productId: string) => void;
-  setQty: (productId: string, qty: number) => void;
+  add: (product: Product, opts?: AddOptions) => void;
+  remove: (key: string) => void;
+  setQty: (key: string, qty: number) => void;
   clear: () => void;
   totalQty: () => number;
   totalTHB: () => number;
@@ -16,35 +25,45 @@ export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       lines: [],
-      add: (product) =>
+      add: (product, opts) =>
         set((state) => {
-          const existing = state.lines.find((l) => l.product.id === product.id);
+          const candidate: CartLine = {
+            product,
+            qty: 1,
+            variantId: opts?.variantId,
+            districtSlug: opts?.districtSlug,
+            priceUSD: opts?.priceUSD,
+          };
+          const key = lineKey(candidate);
+          const existing = state.lines.find((l) => lineKey(l) === key);
           if (existing) {
             return {
               lines: state.lines.map((l) =>
-                l.product.id === product.id ? { ...l, qty: Math.min(l.qty + 1, product.inStock) } : l
+                lineKey(l) === key ? { ...l, qty: l.qty + 1 } : l
               ),
             };
           }
-          return { lines: [...state.lines, { product, qty: 1 }] };
+          return { lines: [...state.lines, candidate] };
         }),
-      remove: (productId) =>
-        set((state) => ({ lines: state.lines.filter((l) => l.product.id !== productId) })),
-      setQty: (productId, qty) =>
+      remove: (key) =>
+        set((state) => ({ lines: state.lines.filter((l) => lineKey(l) !== key) })),
+      setQty: (key, qty) =>
         set((state) => ({
           lines:
             qty <= 0
-              ? state.lines.filter((l) => l.product.id !== productId)
-              : state.lines.map((l) =>
-                  l.product.id === productId
-                    ? { ...l, qty: Math.min(qty, l.product.inStock) }
-                    : l
-                ),
+              ? state.lines.filter((l) => lineKey(l) !== key)
+              : state.lines.map((l) => (lineKey(l) === key ? { ...l, qty } : l)),
         })),
       clear: () => set({ lines: [] }),
       totalQty: () => get().lines.reduce((s, l) => s + l.qty, 0),
-      totalTHB: () => get().lines.reduce((s, l) => s + l.qty * l.product.priceTHB, 0),
+      totalTHB: () =>
+        get().lines.reduce(
+          (s, l) => s + l.qty * (l.priceUSD ?? l.product.priceTHB ?? 0),
+          0
+        ),
     }),
     { name: "sweetleaf-cart" }
   )
 );
+
+export { lineKey };

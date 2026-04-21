@@ -8,11 +8,14 @@ import { CartSheet } from "@/components/shop/CartSheet";
 import { StickyCartBar } from "@/components/shop/StickyCartBar";
 import { SplashLanguage } from "@/components/shop/SplashLanguage";
 import { LocationPicker } from "@/components/shop/LocationPicker";
+import { ProductSheet } from "@/components/shop/ProductSheet";
 import { useTelegram } from "@/lib/telegram";
 import { useI18n, useT } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
 import { useCatalog } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
+import { findCity } from "@/data/locations";
+import type { Product } from "@/types/shop";
 import AdminPage from "./Admin";
 
 const Index = () => {
@@ -43,14 +46,29 @@ const Index = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [showLocPicker, setShowLocPicker] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [openProduct, setOpenProduct] = useState<Product | null>(null);
 
-  const cityProducts = useMemo(
-    () =>
-      city
-        ? products.filter((p) => !p.cities || p.cities.length === 0 || p.cities.includes(city))
-        : products,
-    [products, city]
-  );
+  const cityInfo = city ? findCity(city) : null;
+
+  const cityProducts = useMemo(() => {
+    if (!city || !cityInfo) return products;
+    const cityDistrictSlugs = new Set(
+      (cityInfo.city.districts ?? []).map((d) => d.slug)
+    );
+    const countrySlug = cityInfo.country.slug;
+    return products.filter((p) => {
+      // Must allow this city
+      if (p.cities && p.cities.length > 0 && !p.cities.includes(city)) return false;
+      // Must have at least one variant available in this city with a price for this country
+      const variants = p.variants ?? [];
+      if (variants.length === 0) return false;
+      return variants.some((v) => {
+        if (!v.pricesByCountry?.[countrySlug]) return false;
+        if (cityDistrictSlugs.size === 0) return true;
+        return (v.districts ?? []).some((d) => cityDistrictSlugs.has(d));
+      });
+    });
+  }, [products, city, cityInfo]);
 
   const featured = useMemo(
     () => cityProducts.find((p) => p.featured) ?? cityProducts[0],
@@ -107,7 +125,7 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filtered.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard key={p.id} product={p} onOpen={setOpenProduct} />
               ))}
             </div>
           )}
@@ -123,6 +141,10 @@ const Index = () => {
           setCartOpen(false);
           alert("Checkout — next step 🙂");
         }}
+      />
+      <ProductSheet
+        product={openProduct}
+        onOpenChange={(o) => !o && setOpenProduct(null)}
       />
     </div>
   );
