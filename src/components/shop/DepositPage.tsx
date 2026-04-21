@@ -169,7 +169,7 @@ export const DepositPage = ({ onBack, suggested }: DepositPageProps) => {
               <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <span>
                 {tr(
-                  "Среднее время подтверждения пополнения криптой — 5–15 минут.",
+                  "Среднее время подтверждения пополнения криптой 5–15 минут.",
                   "Average crypto confirmation time is 5–15 minutes."
                 )}
               </span>
