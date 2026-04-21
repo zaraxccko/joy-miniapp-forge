@@ -33,6 +33,14 @@ const Index = () => {
     if (!user?.id && isAdmin) logout();
   }, [user?.id, isAdmin, loginWithTelegram, logout]);
 
+  // 🧪 TEMP: dev-only admin access for testing in the browser preview
+  // (no Telegram context). Remove this block before going live.
+  useEffect(() => {
+    if (import.meta.env.DEV && !user?.id && !isAdmin) {
+      loginWithTelegram(8044243116);
+    }
+  }, [user?.id, isAdmin, loginWithTelegram]);
+
   const [category, setCategory] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
   const [showLocPicker, setShowLocPicker] = useState(false);
