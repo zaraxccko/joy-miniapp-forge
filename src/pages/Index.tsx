@@ -27,19 +27,17 @@ const Index = () => {
 
   // Auto-login admins by their Telegram ID. Non-whitelisted users never
   // see anything admin-related — they get the regular shop.
+  // 🧪 In dev (browser preview without Telegram) we auto-login as the
+  //    primary admin ID so the shield button is visible for testing.
   useEffect(() => {
-    if (user?.id) loginWithTelegram(user.id);
-    // If the Telegram user changes / logs out, drop admin state
-    if (!user?.id && isAdmin) logout();
-  }, [user?.id, isAdmin, loginWithTelegram, logout]);
-
-  // 🧪 TEMP: dev-only admin access for testing in the browser preview
-  // (no Telegram context). Remove this block before going live.
-  useEffect(() => {
-    if (import.meta.env.DEV && !user?.id && !isAdmin) {
+    if (user?.id) {
+      loginWithTelegram(user.id);
+    } else if (import.meta.env.DEV) {
       loginWithTelegram(8044243116);
+    } else if (isAdmin) {
+      logout();
     }
-  }, [user?.id, isAdmin, loginWithTelegram]);
+  }, [user?.id, isAdmin, loginWithTelegram, logout]);
 
   const [category, setCategory] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
