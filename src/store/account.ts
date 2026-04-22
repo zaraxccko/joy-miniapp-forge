@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import type { CartLine } from "@/types/shop";
 import { Deposits, Orders, Admin, Auth } from "@/lib/api";
+import { toast } from "sonner";
 
 export type CryptoCode = "BTC" | "TRX" | "SOL" | "TON" | "USDT";
 
@@ -102,54 +103,87 @@ export const useAccount = create<AccountState>((set, get) => ({
   },
 
   createDeposit: async (amountUSD, crypto) => {
-    const dep = (await Deposits.create(amountUSD, crypto)) as Deposit;
-    set((s) => ({ deposits: [dep, ...s.deposits] }));
-    return dep;
+    try {
+      const dep = (await Deposits.create(amountUSD, crypto)) as Deposit;
+      set((s) => ({ deposits: [dep, ...s.deposits] }));
+      return dep;
+    } catch (e) {
+      toast.error("Не удалось создать заявку на пополнение");
+      throw e;
+    }
   },
 
   markPaid: async (id) => {
-    const updated = (await Deposits.markPaid(id)) as Deposit;
-    set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
+    try {
+      const updated = (await Deposits.markPaid(id)) as Deposit;
+      set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
+    } catch (e) {
+      toast.error("Не удалось отметить оплату");
+      throw e;
+    }
   },
 
   cancelDeposit: async (id) => {
-    const updated = (await Deposits.cancel(id)) as Deposit;
-    set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
+    try {
+      const updated = (await Deposits.cancel(id)) as Deposit;
+      set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
+    } catch (e) {
+      toast.error("Не удалось отменить заявку");
+      throw e;
+    }
   },
 
   confirmDeposit: async (id) => {
-    await Admin.confirmDeposit(id);
-    await get().hydrate();
+    try {
+      await Admin.confirmDeposit(id);
+      await get().hydrate();
+    } catch (e) {
+      toast.error("Не удалось подтвердить пополнение");
+      throw e;
+    }
   },
 
   addOrder: async (o) => {
-    const created = (await Orders.create({
-      totalUSD: o.totalUSD,
-      items: o.items,
-      delivery: o.delivery,
-      deliveryAddress: o.deliveryAddress,
-      crypto: o.crypto,
-      payAddress: o.payAddress,
-    })) as OrderRecord;
-    set((s) => ({ orders: [created, ...s.orders] }));
-    // баланс изменился — подтянем заново
-    Auth.me().then((me) => set({ balanceUSD: me.balanceUSD })).catch(() => {});
-    return created;
+    try {
+      const created = (await Orders.create({
+        totalUSD: o.totalUSD,
+        items: o.items,
+        delivery: o.delivery,
+        deliveryAddress: o.deliveryAddress,
+        crypto: o.crypto,
+        payAddress: o.payAddress,
+      })) as OrderRecord;
+      set((s) => ({ orders: [created, ...s.orders] }));
+      Auth.me().then((me) => set({ balanceUSD: me.balanceUSD })).catch(() => {});
+      return created;
+    } catch (e) {
+      // Тост покажет вызывающий код (он различает insufficient_balance).
+      throw e;
+    }
   },
 
   confirmOrder: async (id, payload) => {
-    // payload.photo может прийти как dataURL — конвертим в File.
-    let file: File | undefined;
-    if (payload.photo?.startsWith("data:")) {
-      file = await dataUrlToFile(payload.photo, "confirm.jpg");
+    try {
+      let file: File | undefined;
+      if (payload.photo?.startsWith("data:")) {
+        file = await dataUrlToFile(payload.photo, "confirm.jpg");
+      }
+      await Admin.confirmOrder(id, { photo: file, text: payload.text });
+      await get().hydrate();
+    } catch (e) {
+      toast.error("Не удалось подтвердить заказ");
+      throw e;
     }
-    await Admin.confirmOrder(id, { photo: file, text: payload.text });
-    await get().hydrate();
   },
 
   cancelOrder: async (id) => {
-    await Admin.cancelOrder(id);
-    await get().hydrate();
+    try {
+      await Admin.cancelOrder(id);
+      await get().hydrate();
+    } catch (e) {
+      toast.error("Не удалось отменить заказ");
+      throw e;
+    }
   },
 
   spend: (amountUSD) => get().balanceUSD >= amountUSD,
