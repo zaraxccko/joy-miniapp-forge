@@ -35,14 +35,18 @@ export const DepositPage = ({ onBack, onDone, suggested }: DepositPageProps) => 
 
   const tr = (ru: string, en: string) => (lang === "ru" ? ru : en);
 
-  const start = () => {
+  const start = async () => {
     if (amount < 1) return;
     haptic("medium");
     const customerName = user?.first_name
       ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
       : user?.username ? `@${user.username}` : undefined;
-    const dep = createDeposit(amount, crypto, { name: customerName, tgId: user?.id });
-    setPendingId(dep.id);
+    try {
+      const dep = await createDeposit(amount, crypto, { name: customerName, tgId: user?.id });
+      setPendingId(dep.id);
+    } catch {
+      toast.error(tr("Не удалось создать заявку", "Failed to create deposit"));
+    }
   };
 
   const copy = async (text: string) => {
