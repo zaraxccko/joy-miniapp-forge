@@ -13,6 +13,13 @@ const cleanOptionalString = (value?: string) => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const isApiMisconfigured = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "body" in error &&
+  typeof (error as { body?: unknown }).body === "object" &&
+  (error as { body?: { error?: string } }).body?.error === "api_misconfigured";
+
 interface CatalogState {
   categories: Category[];
   products: Product[];
@@ -50,8 +57,12 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
       });
     } catch (e: any) {
       set({ loading: false });
-      // Не спамим тостами при первом запуске без бэка.
-      if (get().loaded) toast.error("Не удалось обновить каталог");
+      if (isApiMisconfigured(e)) {
+        toast.error("API не подключён: проверь backend и /api прокси");
+      } else if (get().loaded) {
+        // Не спамим тостами при первом запуске без бэка.
+        toast.error("Не удалось обновить каталог");
+      }
     }
   },
 
