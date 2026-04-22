@@ -1262,9 +1262,9 @@ const DepositsTab = () => {
                     onClick={() => {
                       if (confirm("Отклонить пополнение?")) cancelDeposit(d.id);
                     }}
-                    className="flex-1 bg-background border border-border font-bold py-2 rounded-xl flex items-center justify-center gap-1 active:scale-95 text-destructive"
+                    className="flex-1 bg-background border border-border font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 text-destructive"
                   >
-                    <X className="w-4 h-4" /> Отклонить
+                    <X className="w-4 h-4 shrink-0" /> <span>Отклонить</span>
                   </button>
                 </div>
               </div>
