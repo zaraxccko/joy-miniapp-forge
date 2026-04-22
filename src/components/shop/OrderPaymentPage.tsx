@@ -1,0 +1,293 @@
+import { useMemo, useState } from "react";
+import { ArrowLeft, Check, Copy, Clock, Truck, MapPin } from "lucide-react";
+import { CRYPTO_LIST, useAccount, type CryptoCode } from "@/store/account";
+import { useCart, RESERVATION_MS, DELIVERY_FEE_USD } from "@/store/cart";
+import { useI18n } from "@/lib/i18n";
+import { haptic } from "@/lib/telegram";
+import { formatTHB } from "@/lib/format";
+import { loc } from "@/lib/loc";
+import { findDistrict } from "@/data/locations";
+import { STASH_TYPES } from "@/types/shop";
+import { toast } from "sonner";
+
+interface OrderPaymentPageProps {
+  onBack: () => void;
+  /** Called once the user marked the order as paid (cart cleared, order added). */
+  onPaid: () => void;
+}
+
+/**
+ * Страница оплаты активного заказа.
+ * Открывается из «Активный заказ» в личном кабинете.
+ *
+ * Flow:
+ *   1. Юзер выбирает крипту → видит адрес + сумму
+ *   2. Жмёт «Я оплатил» → создаём запись заказа со статусом `awaiting`,
+ *      чистим корзину, возвращаемся в кабинет.
+ */
+export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
+  const lang = useI18n((s) => s.lang) ?? "ru";
+  const tr = (ru: string, en: string) => (lang === "ru" ? ru : en);
+
+  const lines = useCart((s) => s.linesWithGifts());
+  const cartId = useCart((s) => s.cartId);
+  const subtotal = useCart((s) => s.subtotalUSD());
+  const total = useCart((s) => s.totalTHB());
+  const delivery = useCart((s) => s.delivery);
+  const deliveryAddress = useCart((s) => s.deliveryAddress);
+  const reservedAt = useCart((s) => s.reservedAt);
+  const clearCart = useCart((s) => s.clear);
+
+  const addOrder = useAccount((s) => s.addOrder);
+
+  const [crypto, setCrypto] = useState<CryptoCode>("USDT");
+  const cryptoMeta = useMemo(() => CRYPTO_LIST.find((c) => c.code === crypto)!, [crypto]);
+
+  // Reservation timer
+  const msLeft = reservedAt ? Math.max(0, reservedAt + RESERVATION_MS - Date.now()) : 0;
+  const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
+
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      haptic("success");
+      toast.success(tr("Скопировано", "Copied"));
+    } catch {
+      toast.error(tr("Не удалось скопировать", "Copy failed"));
+    }
+  };
+
+  // Группируем подарки и обычные позиции — для отображения только реальные позиции
+  // (подарки покажутся отдельной плашкой внутри своей карточки).
+  const realLines = lines.filter((l) => !l.isGift);
+
+  const handlePaid = () => {
+    if (realLines.length === 0) return;
+    haptic("success");
+    addOrder({
+      totalUSD: total,
+      items: lines, // включая подарки — пусть в истории видно что было
+      delivery,
+      deliveryAddress: delivery ? deliveryAddress : undefined,
+      status: "awaiting",
+    });
+    clearCart();
+    toast.success(tr("Ждём подтверждения", "Waiting for confirmation"));
+    onPaid();
+  };
+
+  return (
+    <div className="min-h-screen max-w-md mx-auto bg-background">
+      <header className="sticky top-0 z-30 px-5 pt-5 pb-3 bg-background/80 backdrop-blur-xl flex items-center gap-3">
+        <button
+          onClick={() => { haptic("light"); onBack(); }}
+          className="w-10 h-10 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="font-display font-bold text-lg leading-tight">
+            {tr("Оплата заказа", "Order payment")}
+          </div>
+          {cartId && (
+            <div className="text-[11px] font-mono text-muted-foreground">#{cartId}</div>
+          )}
+        </div>
+      </header>
+
+      <main className="px-5 pb-32 space-y-5">
+        {realLines.length === 0 ? (
+          <div className="rounded-2xl bg-card shadow-card p-6 text-center text-sm text-muted-foreground">
+            {tr("Заказ пуст", "Order is empty")}
+          </div>
+        ) : (
+          <>
+            {/* Reservation timer */}
+            {reservedAt > 0 && msLeft > 0 && (
+              <div className="rounded-2xl bg-amber-500/10 text-amber-600 px-4 py-3 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <div className="text-xs font-bold">
+                  {tr("Зарезервировано", "Reserved")} · {mm}:{ss}
+                </div>
+              </div>
+            )}
+
+            {/* Items */}
+            <section>
+              <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+                {tr("Состав заказа", "Order items")}
+              </div>
+              <div className="space-y-2">
+                {realLines.map((line, idx) => {
+                  const variant = line.product.variants?.find((v) => v.id === line.variantId);
+                  const grams = variant?.grams ?? 0;
+                  const districtName = line.districtSlug
+                    ? findDistrict(line.districtSlug)?.name[lang] ?? line.districtSlug
+                    : null;
+                  const stashMeta = line.stashType
+                    ? STASH_TYPES.find((t) => t.value === line.stashType)
+                    : null;
+                  const hasGift = grams >= 5 && line.product.variants?.some((v) => v.id === "5g" || v.grams === 5);
+
+                  return (
+                    <div
+                      key={`${line.product.id}-${line.variantId}-${idx}`}
+                      className="rounded-2xl bg-card shadow-card p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm leading-tight">
+                            {loc(line.product.name, lang)}
+                            {line.variantId && (
+                              <span className="text-muted-foreground font-normal"> · {line.variantId}</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            × {line.qty}
+                          </div>
+                        </div>
+                        <div className="font-bold text-sm shrink-0">
+                          {formatTHB((line.priceUSD ?? line.product.priceTHB ?? 0) * line.qty)}
+                        </div>
+                      </div>
+
+                      {/* Не показываем район/закладку если выбрана доставка */}
+                      {!delivery && (districtName || stashMeta) && (
+                        <div className="mt-2 flex items-center gap-1.5 flex-wrap text-[11px]">
+                          {districtName && (
+                            <span className="inline-flex items-center gap-1 bg-muted rounded-full px-2 py-0.5 text-foreground/80">
+                              <MapPin className="w-3 h-3" /> {districtName}
+                            </span>
+                          )}
+                          {stashMeta && (
+                            <span className="inline-flex items-center gap-1 bg-muted rounded-full px-2 py-0.5 text-foreground/80">
+                              {stashMeta.emoji} {stashMeta.label[lang]}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {hasGift && (
+                        <div className="mt-2 text-[11px] text-primary font-bold uppercase tracking-wide">
+                          🎁 {tr(`Подарок 5g × ${line.qty}`, `Gift 5g × ${line.qty}`)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Delivery info */}
+            {delivery && (
+              <section className="rounded-2xl bg-card shadow-card p-4">
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <Truck className="w-4 h-4 text-primary" />
+                  {tr("Доставка курьером", "Courier delivery")}
+                  <span className="ml-auto text-xs text-muted-foreground">+${DELIVERY_FEE_USD}</span>
+                </div>
+                {deliveryAddress && (
+                  <div className="mt-2 text-xs text-foreground/80 leading-snug whitespace-pre-wrap">
+                    {deliveryAddress}
+                  </div>
+                )}
+                <div className="mt-2 text-[11px] text-muted-foreground">
+                  {tr("Время доставки: 40–60 минут", "Delivery time: 40–60 minutes")}
+                </div>
+              </section>
+            )}
+
+            {/* Totals */}
+            <section className="rounded-2xl bg-card shadow-card p-4 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{tr("Сумма", "Subtotal")}</span>
+                <span>{formatTHB(subtotal)}</span>
+              </div>
+              {delivery && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{tr("Доставка", "Delivery")}</span>
+                  <span>+${DELIVERY_FEE_USD}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <span className="font-semibold">{tr("К оплате", "Total")}</span>
+                <span className="font-display font-bold text-2xl">{formatTHB(total)}</span>
+              </div>
+            </section>
+
+            {/* Crypto selector */}
+            <section>
+              <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+                {tr("Способ оплаты", "Payment method")}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {CRYPTO_LIST.map((c) => {
+                  const active = c.code === crypto;
+                  return (
+                    <button
+                      key={c.code}
+                      onClick={() => { haptic("light"); setCrypto(c.code); }}
+                      className={`rounded-2xl p-3 text-left border transition-colors ${
+                        active
+                          ? "gradient-primary text-primary-foreground border-transparent shadow-glow"
+                          : "bg-card border-border"
+                      }`}
+                    >
+                      <div className="font-bold">{c.code}</div>
+                      <div className={`text-[11px] ${active ? "opacity-80" : "text-muted-foreground"}`}>
+                        {c.name === c.network || c.code === c.network ? c.name : `${c.name} · ${c.network}`}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Wallet address */}
+            <section className="rounded-2xl bg-card shadow-card p-4">
+              <div className="text-xs text-muted-foreground mb-1">
+                {tr("Адрес кошелька", "Wallet address")}
+              </div>
+              <div className="font-mono text-sm break-all">{cryptoMeta.address}</div>
+              <button
+                onClick={() => copy(cryptoMeta.address)}
+                className="mt-3 w-full flex items-center justify-center gap-2 bg-background border border-border rounded-xl py-2.5 text-sm font-bold active:scale-[0.98]"
+              >
+                <Copy className="w-4 h-4" />
+                {tr("Скопировать адрес", "Copy address")}
+              </button>
+            </section>
+
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-foreground/80 space-y-1.5">
+              <div className="flex gap-2 items-start">
+                <span className="text-primary font-bold">⚠️</span>
+                <span>
+                  {tr(
+                    `Отправляйте только ${cryptoMeta.name} в сети ${cryptoMeta.network}.`,
+                    `Send only ${cryptoMeta.name} on the ${cryptoMeta.network} network.`
+                  )}
+                </span>
+              </div>
+              <div className="flex gap-2 items-start">
+                <span className="text-primary font-bold">💸</span>
+                <span>
+                  {tr("Учитывайте комиссию сети.", "Mind the network fee.")}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePaid}
+              className="w-full gradient-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-glow active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <Check className="w-5 h-5" />
+              {tr("Я оплатил", "I have paid")}
+            </button>
+          </>
+        )}
+      </main>
+    </div>
+  );
+};

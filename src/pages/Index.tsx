@@ -11,6 +11,7 @@ import { LocationPicker } from "@/components/shop/LocationPicker";
 import { ProductSheet } from "@/components/shop/ProductSheet";
 import { DepositPage } from "@/components/shop/DepositPage";
 import { AccountPage } from "@/components/shop/AccountPage";
+import { OrderPaymentPage } from "@/components/shop/OrderPaymentPage";
 import { CaptchaGate } from "@/components/shop/CaptchaGate";
 import { useCaptcha } from "@/store/captcha";
 import { useTelegram } from "@/lib/telegram";
@@ -57,6 +58,7 @@ const Index = () => {
   const [showAccount, setShowAccount] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [depositSuggested, setDepositSuggested] = useState<number | undefined>(undefined);
+  const [orderPayOpen, setOrderPayOpen] = useState(false);
 
   const balance = useAccount((s) => s.balanceUSD);
   const spend = useAccount((s) => s.spend);
@@ -169,12 +171,21 @@ const Index = () => {
       />
     );
 
+  if (orderPayOpen)
+    return (
+      <OrderPaymentPage
+        onBack={() => setOrderPayOpen(false)}
+        onPaid={() => { setOrderPayOpen(false); setShowAccount(true); }}
+      />
+    );
+
   if (showAccount)
     return (
       <AccountPage
         onBack={() => setShowAccount(false)}
         onTopUp={() => { setShowAccount(false); setDepositSuggested(undefined); setDepositOpen(true); }}
         onOpenCart={() => { setShowAccount(false); setCartOpen(true); }}
+        onOpenActiveOrder={() => { setShowAccount(false); setOrderPayOpen(true); }}
       />
     );
 

@@ -11,9 +11,12 @@ interface AccountPageProps {
   onBack: () => void;
   onTopUp: () => void;
   onOpenCart: () => void;
+  /** Открыть страницу оплаты текущего активного заказа. */
+  onOpenActiveOrder: () => void;
 }
 
 const statusMeta = {
+  awaiting:    { ru: "Ожидает",     en: "Pending",     cls: "bg-amber-500/15 text-amber-600" },
   paid:        { ru: "Оплачен",     en: "Paid",        cls: "bg-primary/15 text-primary" },
   in_delivery: { ru: "В доставке",  en: "In delivery", cls: "bg-amber-500/15 text-amber-600" },
   completed:   { ru: "Получен",     en: "Completed",   cls: "bg-emerald-500/15 text-emerald-600" },
@@ -27,7 +30,7 @@ const depStatusMeta = {
   cancelled: { ru: "Отменено",     en: "Cancelled", cls: "bg-muted text-muted-foreground" },
 } as const;
 
-export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) => {
+export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
   const { user } = useTelegram();
   const balance = useAccount((s) => s.balanceUSD);
@@ -117,7 +120,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
               <ShoppingBag className="w-4 h-4" /> {tr("Активный заказ", "Active order")}
             </div>
             {cartLines.length > 0 && (
-              <button onClick={onOpenCart} className="text-xs font-bold text-primary">
+              <button onClick={onOpenActiveOrder} className="text-xs font-bold text-primary">
                 {tr("Открыть", "Open")}
               </button>
             )}
@@ -128,7 +131,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
             </div>
           ) : (
             <button
-              onClick={onOpenCart}
+              onClick={onOpenActiveOrder}
               className="w-full rounded-2xl bg-card shadow-card p-4 text-left active:scale-[0.99] space-y-2"
             >
               <div className="flex items-center justify-between">

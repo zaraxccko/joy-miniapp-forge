@@ -43,7 +43,7 @@ export interface Deposit {
   confirmedAt?: string;
 }
 
-export type OrderHistoryStatus = "paid" | "in_delivery" | "completed" | "cancelled";
+export type OrderHistoryStatus = "awaiting" | "paid" | "in_delivery" | "completed" | "cancelled";
 
 export interface OrderRecord {
   id: string;
