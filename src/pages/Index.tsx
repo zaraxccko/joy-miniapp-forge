@@ -92,11 +92,16 @@ const Index = () => {
       toast.error(lang === "en" ? "Not enough balance" : "Недостаточно средств");
       return;
     }
+    const customerName = user?.first_name
+      ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
+      : user?.username ? `@${user.username}` : undefined;
     addOrder({
       totalUSD: cartTotal,
       items: cartLines,
       delivery: cartDelivery,
       deliveryAddress: cartDelivery ? cartAddress : undefined,
+      customerName,
+      customerTgId: user?.id,
     });
     clearCart();
     setCartOpen(false);

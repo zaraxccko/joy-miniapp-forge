@@ -70,6 +70,8 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
     : user?.username
       ? `@${user.username}`
       : tr("Гость", "Guest");
+  const handle = user?.username ? `@${user.username}` : null;
+  const initials = (user?.first_name?.[0] ?? user?.username?.[0] ?? "G").toUpperCase();
 
   return (
     <div className="min-h-screen max-w-md mx-auto bg-background">
@@ -87,14 +89,26 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
       <main className="px-5 pb-32 space-y-5">
         {/* Profile */}
         <section className="rounded-2xl bg-card shadow-card p-4 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center">
-            <UserIcon className="w-6 h-6" />
-          </div>
+          {user?.photo_url ? (
+            <img
+              src={user.photo_url}
+              alt={displayName}
+              className="w-12 h-12 rounded-2xl object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center font-bold">
+              {user?.first_name || user?.username ? initials : <UserIcon className="w-6 h-6" />}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="font-bold truncate">{displayName}</div>
-            <div className="text-[11px] text-muted-foreground">
-              {user?.id ? `Telegram ID: ${user.id}` : tr("Не из Telegram", "Not from Telegram")}
-            </div>
+            {handle ? (
+              <div className="text-[11px] text-muted-foreground truncate">{handle}</div>
+            ) : (
+              <div className="text-[11px] text-muted-foreground">
+                {user?.id ? `Telegram ID: ${user.id}` : tr("Не из Telegram", "Not from Telegram")}
+              </div>
+            )}
           </div>
         </section>
 
