@@ -107,7 +107,7 @@ export const CaptchaGate = () => {
 
     if (idx === board.targetIndex) {
       haptic("success");
-      toast.success(tr("Готово! Добро пожаловать", "All set! Welcome"));
+      toast.success(tr("Добро пожаловать", "Welcome"));
       pass();
       return;
     }
