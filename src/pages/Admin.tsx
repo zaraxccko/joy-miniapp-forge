@@ -212,7 +212,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📊
             </div>
             <div className="font-bold text-sm">Аналитика</div>
-            <div className="text-[11px] text-muted-foreground">Активность, оборот, воронки</div>
+            
           </button>
           <button
             onClick={() => setSelectedCountry("__broadcast__")}
@@ -222,7 +222,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📢
             </div>
             <div className="font-bold text-sm">Рассылка</div>
-            <div className="text-[11px] text-muted-foreground">Сообщение всем юзерам</div>
+            
           </button>
         </div>
 
