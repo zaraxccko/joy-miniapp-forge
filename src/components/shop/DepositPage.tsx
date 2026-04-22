@@ -152,7 +152,7 @@ export const DepositPage = ({ onBack, onDone, suggested }: DepositPageProps) => 
                     >
                       <div className="font-bold">{c.code}</div>
                       <div className={`text-[11px] ${active ? "opacity-80" : "text-muted-foreground"}`}>
-                        {c.name} · {c.network}
+                        {c.name === c.network ? c.name : `${c.name} · ${c.network}`}
                       </div>
                     </button>
                   );
