@@ -35,6 +35,26 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
   const deposits = useAccount((s) => s.deposits);
   const cartLines = useCart((s) => s.lines);
   const cartTotal = useCart((s) => s.totalTHB());
+  const cartId = useCart((s) => s.cartId);
+  const reservedAt = useCart((s) => s.reservedAt);
+  const clearCart = useCart((s) => s.clear);
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!reservedAt || cartLines.length === 0) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [reservedAt, cartLines.length]);
+
+  const msLeft = reservedAt ? Math.max(0, reservedAt + RESERVATION_MS - now) : 0;
+  useEffect(() => {
+    if (reservedAt && cartLines.length > 0 && msLeft === 0) {
+      clearCart();
+    }
+  }, [msLeft, reservedAt, cartLines.length, clearCart]);
+
+  const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
 
   const tr = (ru: string, en: string) => (lang === "ru" ? ru : en);
   const fmtDate = (iso: string) =>
