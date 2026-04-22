@@ -910,10 +910,13 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               {t("admin.cancel")}
             </Button>
             <Button
-              onClick={() => {
-                if (editingP) {
-                  upsertProduct(editingP);
+              onClick={async () => {
+                if (!editingP) return;
+                try {
+                  await upsertProduct(editingP);
                   setEditingP(null);
+                } catch {
+                  // Оставляем диалог открытым, чтобы можно было поправить поля и сохранить снова.
                 }
               }}
               className="flex-1 gradient-primary"

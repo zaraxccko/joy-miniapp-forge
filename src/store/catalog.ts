@@ -7,6 +7,12 @@ import { CATEGORIES as DEFAULT_CATEGORIES } from "@/data/mockProducts";
 import { Catalog, Admin } from "@/lib/api";
 import { toast } from "sonner";
 
+const cleanOptionalString = (value?: string) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 interface CatalogState {
   categories: Category[];
   products: Product[];
@@ -61,11 +67,11 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
       priceTHB: p.priceTHB,
       thcMg: p.thcMg,
       cbdMg: p.cbdMg,
-      weight: p.weight,
+      weight: cleanOptionalString(p.weight),
       inStock: p.inStock,
       gradient: p.gradient,
       emoji: p.emoji,
-      imageUrl: p.imageUrl,
+      imageUrl: cleanOptionalString(p.imageUrl),
       featured: p.featured,
       badge: p.badge,
       cities: p.cities,
@@ -82,8 +88,11 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
       if (exists) await Admin.updateProduct(p.id, payload);
       else await Admin.createProduct(payload);
       await get().hydrate();
-    } catch (e) {
-      toast.error("Не удалось сохранить товар");
+    } catch (e: any) {
+      const reason = e?.body && typeof e.body === "object" && "error" in e.body
+        ? String((e.body as { error?: unknown }).error)
+        : null;
+      toast.error(reason ? `Не удалось сохранить товар: ${reason}` : "Не удалось сохранить товар");
       throw e;
     }
   },

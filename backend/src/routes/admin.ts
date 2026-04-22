@@ -210,6 +210,27 @@ export async function adminRoutes(app: FastifyInstance) {
   // ============== PRODUCTS CRUD ====================================
   // ==================================================================
 
+  const optionalString = (max: number) =>
+    z.preprocess((value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed === "" ? undefined : trimmed;
+    }, z.string().max(max).optional());
+
+  const optionalImageUrl = z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  }, z.string().max(2_000_000).refine((value) => {
+    if (value.startsWith("data:image/")) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "Invalid image URL").optional());
+
   const ProductInput = z.object({
     name: z.union([z.string(), z.object({ ru: z.string(), en: z.string() })]),
     description: z.union([z.string(), z.object({ ru: z.string(), en: z.string() })]),
@@ -217,11 +238,11 @@ export async function adminRoutes(app: FastifyInstance) {
     priceTHB: z.number().nonnegative().optional(),
     thcMg: z.number().int().optional(),
     cbdMg: z.number().int().optional(),
-    weight: z.string().max(32).optional(),
+    weight: optionalString(32),
     inStock: z.number().int().nonnegative().optional(),
     gradient: z.string().optional(),
     emoji: z.string().max(8).optional(),
-    imageUrl: z.string().url().max(2048).optional(),
+    imageUrl: optionalImageUrl,
     featured: z.boolean().optional(),
     badge: z.any().optional(),
     cities: z.array(z.string()).max(100).optional(),
