@@ -30,7 +30,7 @@ const depStatusMeta = {
   cancelled: { ru: "Отменено",     en: "Cancelled", cls: "bg-muted text-muted-foreground" },
 } as const;
 
-export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) => {
+export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
   const { user } = useTelegram();
   const balance = useAccount((s) => s.balanceUSD);
