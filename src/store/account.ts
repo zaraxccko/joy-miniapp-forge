@@ -4,12 +4,24 @@ import type { CartLine } from "@/types/shop";
 
 export type CryptoCode = "BTC" | "TRX" | "SOL" | "TON" | "USDT";
 
+// ============================================================
+// 💰 КОШЕЛЬКИ ДЛЯ ПРИЁМА ОПЛАТЫ
+// ============================================================
+// Это адреса, на которые юзеры отправляют крипту при пополнении баланса.
+// Они показываются на странице депозита (DepositPage).
+//
+// 👉 Чтобы поменять адрес — просто отредактируй поле `address` ниже.
+//    Никакой бэк/база не нужны, всё статично в коде.
+//
+// ⚠️ Будь внимателен: ошибка в адресе = потеря денег.
+//    USDT и TRX используют ОДИН и тот же адрес сети TRC-20 (Tron).
+// ============================================================
 export const CRYPTO_LIST: { code: CryptoCode; name: string; network: string; address: string }[] = [
-  { code: "USDT", name: "Tether",  network: "TRC-20", address: "TXkjN3p8VsHc4yQ2mLp9wRfBdK7tA1nZsY" },
-  { code: "TRX",  name: "Tron",    network: "TRC-20", address: "TRX9aB2cDfGhJkLmNpQrStUvWxYz123aBcK" },
-  { code: "BTC",  name: "Bitcoin", network: "Bitcoin", address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" },
-  { code: "SOL",  name: "Solana",  network: "Solana", address: "So1aNaWa11etExamp1eAddressFor1usttest1ng" },
-  { code: "TON",  name: "Toncoin", network: "TON",    address: "UQAvDfTONwa11etExampleAddressForTesting12" },
+  { code: "USDT", name: "Tether",  network: "TRC-20", address: "TRGD4qP5SThQ2kt11jaKfUW6pZf2TpaDHt" },
+  { code: "TRX",  name: "Tron",    network: "TRC-20", address: "TRGD4qP5SThQ2kt11jaKfUW6pZf2TpaDHt" },
+  { code: "BTC",  name: "Bitcoin", network: "Bitcoin", address: "18JxaejFvEvSTxmPsJvmpYVxudHrVbofdu" },
+  { code: "SOL",  name: "Solana",  network: "Solana",  address: "FDpmT2bW8Y685CtFcMWSBuJi7D6xtr2JrNiMFDQCpJVe" },
+  { code: "TON",  name: "Toncoin", network: "TON",     address: "EQAaPP8_JvEXQAxXE2K1F8LoIuRYbDNYzWmvpgw0XRarsVvQ" },
 ];
 
 /**
