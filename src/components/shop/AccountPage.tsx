@@ -129,12 +129,25 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart }: AccountPageProps) =
           ) : (
             <button
               onClick={onOpenCart}
-              className="w-full rounded-2xl bg-card shadow-card p-4 text-left active:scale-[0.99]"
+              className="w-full rounded-2xl bg-card shadow-card p-4 text-left active:scale-[0.99] space-y-2"
             >
-              <div className="text-xs text-muted-foreground">
-                {cartLines.length} {tr("позиций", "items")}
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">
+                  #{cartId}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {cartLines.length} {tr("позиций", "items")}
+                </div>
               </div>
-              <div className="font-display font-bold text-xl mt-1">{formatTHB(cartTotal)}</div>
+              <div className="font-display font-bold text-xl">{formatTHB(cartTotal)}</div>
+              {reservedAt > 0 && (
+                <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 text-amber-600 px-3 py-2">
+                  <Clock className="w-4 h-4" />
+                  <div className="text-[11px] font-bold">
+                    {tr("Зарезервировано", "Reserved")} · {mm}:{ss}
+                  </div>
+                </div>
+              )}
             </button>
           )}
         </section>
