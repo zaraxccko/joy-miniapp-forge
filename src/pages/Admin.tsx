@@ -1294,6 +1294,7 @@ const DepositsTab = () => {
 
         const depositItems: HistoryItem[] = deposits
           .filter((d) => d.status === "confirmed" || d.status === "cancelled")
+          .filter((d) => !(d.status === "cancelled" && !d.paidAt))
           .map((d) => ({
             kind: "deposit",
             id: d.id,
