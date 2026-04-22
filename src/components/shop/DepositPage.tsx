@@ -55,9 +55,7 @@ export const DepositPage = ({ onBack, onDone, suggested }: DepositPageProps) => 
     if (!pending) return;
     haptic("success");
     markPaid(pending.id);
-    toast.success(
-      tr("Заявка отправлена. Ждём подтверждения.", "Submitted. Waiting for confirmation.")
-    );
+    toast.success(tr("Ждём подтверждения", "Waiting for confirmation"));
   };
 
   const cancel = () => {
