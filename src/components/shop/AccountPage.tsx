@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Wallet, Plus, Package, Receipt, User as UserIcon, ShoppingBag, Clock, ChevronDown } from "lucide-react";
+import { ArrowLeft, Wallet, Plus, Package, Receipt, User as UserIcon, ShoppingBag, Clock } from "lucide-react";
 import { useAccount } from "@/store/account";
 import { useCart, RESERVATION_MS } from "@/store/cart";
 import { useI18n } from "@/lib/i18n";
@@ -195,7 +195,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
             </div>
           ) : (
             <div className="space-y-2">
-              {orders.map((o) => {
+              {orders.slice(0, 5).map((o) => {
                 const m = statusMeta[o.status];
                 return (
                   <div key={o.id} className="rounded-2xl bg-card shadow-card p-3">
