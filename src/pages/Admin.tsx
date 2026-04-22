@@ -1217,78 +1217,50 @@ const DepositsTab = () => {
         )}
       </div>
 
-      {/* === Заявки на пополнение БАЛАНСА (крипта) === */}
-      <div>
-        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
-          Пополнения — ждут подтверждения ({awaiting.length})
-        </div>
-        {awaiting.length === 0 ? (
-          <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
-            Нет новых заявок
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {awaiting.map((d) => (
-              <div key={d.id} className="bg-card rounded-2xl p-3 shadow-card space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-display font-bold text-lg">${d.amountUSD}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {d.crypto} · {fmt(d.paidAt ?? d.createdAt)}
+      {/* === История заказов === */}
+      {(() => {
+        const historyOrders = orders.filter((o) => o.status !== "awaiting");
+        const orderStatusLabel: Record<string, string> = {
+          paid: "Подтверждён",
+          in_delivery: "В доставке",
+          completed: "Получен",
+          cancelled: "Отменён",
+        };
+        const orderStatusClass: Record<string, string> = {
+          paid: "bg-emerald-500/15 text-emerald-600",
+          in_delivery: "bg-amber-500/15 text-amber-600",
+          completed: "bg-emerald-500/15 text-emerald-600",
+          cancelled: "bg-destructive/10 text-destructive",
+        };
+        return (
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
+              История заказов ({historyOrders.length})
+            </div>
+            {historyOrders.length === 0 ? (
+              <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
+                Пусто
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {historyOrders.map((o) => (
+                  <div key={o.id} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold">${o.totalUSD}{o.crypto ? ` · ${o.crypto}` : ""}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {o.customerName ?? (o.customerTgId ? `TG ${o.customerTgId}` : "Гость")} · {fmt(o.createdAt)}
+                      </div>
                     </div>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${orderStatusClass[o.status] ?? "bg-muted text-muted-foreground"}`}>
+                      {orderStatusLabel[o.status] ?? o.status}
+                    </span>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${statusClass.awaiting}`}>
-                    {statusLabel.awaiting}
-                  </span>
-                </div>
-                <div className="font-mono text-[11px] break-all bg-background rounded-lg p-2">
-                  {d.address}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => confirmDeposit(d.id)}
-                    className="flex-1 gradient-primary text-primary-foreground font-bold py-2 rounded-xl flex items-center justify-center gap-1 active:scale-95"
-                  >
-                    <Check className="w-4 h-4" /> Подтвердить
-                  </button>
-                  <button
-                    onClick={() => cancelDeposit(d.id)}
-                    className="flex-1 bg-background border border-border font-bold py-2 rounded-xl flex items-center justify-center gap-1 active:scale-95 text-destructive"
-                  >
-                    <X className="w-4 h-4" /> Отклонить
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
-
-      <div>
-        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
-          История пополнений ({others.length})
-        </div>
-        {others.length === 0 ? (
-          <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
-            Пусто
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {others.map((d) => (
-              <div key={d.id} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between">
-                <div>
-                  <div className="font-bold">${d.amountUSD} · {d.crypto}</div>
-                  <div className="text-[11px] text-muted-foreground">{fmt(d.createdAt)}</div>
-                </div>
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${statusClass[d.status]}`}>
-                  {statusLabel[d.status]}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
+        );
+      })()}
       {/* === Модалка подтверждения заказа: фото + текст === */}
       <Dialog open={!!confirmTarget} onOpenChange={(v) => { if (!v) setConfirmTarget(null); }}>
         <DialogContent className="max-w-md">
