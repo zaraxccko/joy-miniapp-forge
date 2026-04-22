@@ -77,7 +77,7 @@ interface AccountState {
   deposits: Deposit[];
   orders: OrderRecord[];
 
-  createDeposit: (amountUSD: number, crypto: CryptoCode) => Deposit;
+  createDeposit: (amountUSD: number, crypto: CryptoCode, customer?: { name?: string; tgId?: number }) => Deposit;
   /** Юзер сообщил, что оплатил — депозит уходит на подтверждение админа. */
   markPaid: (id: string) => void;
   /** Админ подтверждает оплату — баланс пополняется. */
