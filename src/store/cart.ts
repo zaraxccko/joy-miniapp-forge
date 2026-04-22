@@ -124,17 +124,24 @@ export const useCart = create<CartState>()(
               stashType: opts?.stashType,
               priceUSD: opts?.priceUSD,
             };
+            // Если корзина пустая или резерв истёк — стартуем новый заказ
+            const expired =
+              c.reservedAt > 0 && Date.now() - c.reservedAt > RESERVATION_MS;
+            const base =
+              c.lines.length === 0 || expired
+                ? { ...c, cartId: newCartId(), reservedAt: Date.now() }
+                : c;
             const key = lineKey(candidate);
-            const existing = c.lines.find((l) => lineKey(l) === key);
+            const existing = base.lines.find((l) => lineKey(l) === key);
             if (existing) {
               return {
-                ...c,
-                lines: c.lines.map((l) =>
+                ...base,
+                lines: base.lines.map((l) =>
                   lineKey(l) === key ? { ...l, qty: l.qty + 1 } : l
                 ),
               };
             }
-            return { ...c, lines: [...c.lines, candidate] };
+            return { ...base, lines: [...base.lines, candidate] };
           })
         ),
       remove: (key) =>
@@ -142,7 +149,7 @@ export const useCart = create<CartState>()(
           applyToActive(s, (c) => {
             const lines = c.lines.filter((l) => lineKey(l) !== key);
             return lines.length === 0
-              ? { lines, delivery: false, deliveryAddress: "" }
+              ? emptyCart()
               : { ...c, lines };
           })
         ),
