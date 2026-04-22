@@ -1,0 +1,141 @@
+// Prisma schema for loveshop backend
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  tgId        BigInt   @id @map("tg_id")
+  username    String?
+  firstName   String?  @map("first_name")
+  lastName    String?  @map("last_name")
+  photoUrl    String?  @map("photo_url")
+  lang        String   @default("ru")
+  citySlug    String?  @map("city_slug")
+  balanceUSD  Float    @default(0) @map("balance_usd")
+  isAdmin     Boolean  @default(false) @map("is_admin")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  deposits    Deposit[]
+  orders      Order[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  // LocalizedString {ru, en} stored as JSONB
+  name        Json
+  description Json
+  category    String
+  priceTHB    Float    @default(0) @map("price_thb")
+  thcMg       Int?     @map("thc_mg")
+  cbdMg       Int?     @map("cbd_mg")
+  weight      String?
+  inStock     Int      @default(0) @map("in_stock")
+  gradient    String   @default("gradient-primary")
+  emoji       String   @default("📦")
+  imageUrl    String?  @map("image_url")
+  featured    Boolean  @default(false)
+  badge       Json?
+  cities      String[] @default([])
+  districts   String[] @default([])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  variants    Variant[]
+
+  @@map("products")
+}
+
+model Variant {
+  id              String  @id @default(cuid())
+  productId       String  @map("product_id")
+  // e.g. "1g"
+  slug            String
+  grams           Float
+  // {"thailand": 100, "vietnam": 90, ...}
+  pricesByCountry Json    @map("prices_by_country")
+  // [{districtSlug, type}]
+  stashes         Json    @default("[]")
+  districts       String[] @default([])
+
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, slug])
+  @@map("variants")
+}
+
+enum DepositStatus {
+  pending
+  awaiting
+  confirmed
+  cancelled
+}
+
+model Deposit {
+  id           String        @id @default(cuid())
+  userTgId     BigInt        @map("user_tg_id")
+  amountUSD    Float         @map("amount_usd")
+  crypto       String
+  address      String
+  status       DepositStatus @default(pending)
+  paidAt       DateTime?     @map("paid_at")
+  confirmedAt  DateTime?     @map("confirmed_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userTgId], references: [tgId])
+
+  @@index([userTgId])
+  @@index([status])
+  @@map("deposits")
+}
+
+enum OrderStatus {
+  awaiting
+  paid
+  in_delivery
+  completed
+  cancelled
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  userTgId         BigInt      @map("user_tg_id")
+  totalUSD         Float       @map("total_usd")
+  // CartLine[] snapshot
+  items            Json
+  delivery         Boolean     @default(false)
+  deliveryAddress  String?     @map("delivery_address")
+  status           OrderStatus @default(awaiting)
+  crypto           String?
+  payAddress       String?     @map("pay_address")
+  confirmPhotoUrl  String?     @map("confirm_photo_url")
+  confirmText      String?     @map("confirm_text")
+  confirmedAt      DateTime?   @map("confirmed_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  user             User        @relation(fields: [userTgId], references: [tgId])
+
+  @@index([userTgId])
+  @@index([status])
+  @@map("orders")
+}
+
+model BroadcastLog {
+  id          String   @id @default(cuid())
+  segment     String
+  text        String
+  imageUrl    String?  @map("image_url")
+  button      Json?
+  sentCount   Int      @default(0) @map("sent_count")
+  failedCount Int      @default(0) @map("failed_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("broadcast_log")
+}
