@@ -9,7 +9,10 @@ declare module "fastify" {
 
 export async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
   try {
-    const decoded = await req.jwtVerify<{ tgId: string }>();
+    const decoded = (await req.jwtVerify()) as unknown as { tgId: string | number };
+    if (!decoded || typeof decoded !== "object" || !("tgId" in decoded)) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
     const tgId = BigInt(decoded.tgId);
     req.user = { tgId, isAdmin: isAdminTgId(tgId) };
   } catch {
