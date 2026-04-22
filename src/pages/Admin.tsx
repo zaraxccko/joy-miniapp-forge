@@ -1273,42 +1273,82 @@ const DepositsTab = () => {
         )}
       </div>
 
-      {/* === История заказов === */}
+      {/* === История заказов и пополнений === */}
       {(() => {
-        const historyOrders = orders.filter((o) => o.status !== "awaiting");
-        const orderStatusLabel: Record<string, string> = {
+        type HistoryItem =
+          | { kind: "order"; id: string; createdAt: string; status: string; totalUSD: number; crypto?: string; customerName?: string; customerTgId?: number }
+          | { kind: "deposit"; id: string; createdAt: string; status: string; totalUSD: number; crypto?: string; customerName?: string; customerTgId?: number };
+
+        const orderItems: HistoryItem[] = orders
+          .filter((o) => o.status !== "awaiting")
+          .map((o) => ({
+            kind: "order",
+            id: o.id,
+            createdAt: o.createdAt,
+            status: o.status,
+            totalUSD: o.totalUSD,
+            crypto: o.crypto,
+            customerName: o.customerName,
+            customerTgId: o.customerTgId,
+          }));
+
+        const depositItems: HistoryItem[] = deposits
+          .filter((d) => d.status === "confirmed" || d.status === "cancelled")
+          .map((d) => ({
+            kind: "deposit",
+            id: d.id,
+            createdAt: d.createdAt,
+            status: d.status,
+            totalUSD: d.amountUSD,
+            crypto: d.crypto,
+            customerName: d.customerName,
+            customerTgId: d.customerTgId,
+          }));
+
+        const historyItems = [...orderItems, ...depositItems].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        const statusLabel: Record<string, string> = {
           paid: "Подтверждён",
           in_delivery: "В доставке",
           completed: "Получен",
           cancelled: "Отменён",
+          confirmed: "Зачислено",
         };
-        const orderStatusClass: Record<string, string> = {
+        const statusClassMap: Record<string, string> = {
           paid: "bg-emerald-500/15 text-emerald-600",
           in_delivery: "bg-amber-500/15 text-amber-600",
           completed: "bg-emerald-500/15 text-emerald-600",
           cancelled: "bg-destructive/10 text-destructive",
+          confirmed: "bg-emerald-500/15 text-emerald-600",
         };
         return (
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
-              История заказов ({historyOrders.length})
+              История ({historyItems.length})
             </div>
-            {historyOrders.length === 0 ? (
+            {historyItems.length === 0 ? (
               <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
                 Пусто
               </div>
             ) : (
               <div className="space-y-2">
-                {historyOrders.map((o) => (
-                  <div key={o.id} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between gap-2">
+                {historyItems.map((it) => (
+                  <div key={`${it.kind}-${it.id}`} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-bold">${o.totalUSD}{o.crypto ? ` · ${o.crypto}` : ""}</div>
+                      <div className="font-bold flex items-center gap-1.5">
+                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${it.kind === "deposit" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {it.kind === "deposit" ? "Пополнение" : "Заказ"}
+                        </span>
+                        <span>{it.kind === "deposit" ? "+" : ""}${it.totalUSD}{it.crypto ? ` · ${it.crypto}` : ""}</span>
+                      </div>
                       <div className="text-[11px] text-muted-foreground truncate">
-                        {o.customerName ?? (o.customerTgId ? `TG ${o.customerTgId}` : "Гость")} · {fmt(o.createdAt)}
+                        {it.customerName ?? (it.customerTgId ? `TG ${it.customerTgId}` : "Гость")} · {fmt(it.createdAt)}
                       </div>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${orderStatusClass[o.status] ?? "bg-muted text-muted-foreground"}`}>
-                      {orderStatusLabel[o.status] ?? o.status}
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClassMap[it.status] ?? "bg-muted text-muted-foreground"}`}>
+                      {statusLabel[it.status] ?? it.status}
                     </span>
                   </div>
                 ))}
