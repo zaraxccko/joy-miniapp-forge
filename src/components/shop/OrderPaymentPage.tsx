@@ -71,12 +71,17 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
   const handlePaid = () => {
     if (realLines.length === 0) return;
     haptic("success");
+    const customerName = user?.first_name
+      ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
+      : user?.username ? `@${user.username}` : undefined;
     addOrder({
       totalUSD: total,
       items: lines, // включая подарки — пусть в истории видно что было
       delivery,
       deliveryAddress: delivery ? deliveryAddress : undefined,
       status: "awaiting",
+      customerName,
+      customerTgId: user?.id,
     });
     clearCart();
     toast.success(tr("Ждём подтверждения", "Waiting for confirmation"));
