@@ -1313,7 +1313,7 @@ const DepositsTab = () => {
         const statusLabel: Record<string, string> = {
           paid: "Подтверждён",
           in_delivery: "В доставке",
-          completed: "Получен",
+          completed: "Подтверждён",
           cancelled: "Отменён",
           confirmed: "Зачислено",
         };
