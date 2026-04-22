@@ -54,6 +54,10 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
     return { w: box, h: box / r };
   })();
 
+  // Минимальный зум, чтобы картинка целиком влезла в квадрат (contain).
+  // Для cover-базы это меньшая сторона / большую → <1 для непрямоугольных.
+  const minZoom = natural ? Math.min(box / cover.w, box / cover.h) : 1;
+
   const drawnW = cover.w * zoom;
   const drawnH = cover.h * zoom;
 
