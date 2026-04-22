@@ -144,16 +144,16 @@ export const BroadcastTab = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div>
+          <div className="min-w-0">
             <Label className="text-xs">Текст кнопки</Label>
             <Input
               value={btnText}
               onChange={(e) => setBtnText(e.target.value)}
               placeholder="Открыть магазин"
-              className="mt-1"
+              className="mt-1 w-full"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <Label className="text-xs flex items-center gap-1">
               <LinkIcon className="w-3 h-3" /> URL
             </Label>
@@ -161,7 +161,7 @@ export const BroadcastTab = () => {
               value={btnUrl}
               onChange={(e) => setBtnUrl(e.target.value)}
               placeholder="https://t.me/..."
-              className="mt-1"
+              className="mt-1 w-full"
             />
           </div>
         </div>
