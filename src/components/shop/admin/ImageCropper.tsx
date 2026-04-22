@@ -6,41 +6,33 @@ import { Slider } from "@/components/ui/slider";
 interface ImageCropperProps {
   open: boolean;
   src: string | null;
-  /** Output edge size in px. Default 512. */
   size?: number;
   onCancel: () => void;
   onConfirm: (croppedDataUrl: string) => void;
 }
 
 /**
- * Квадратный редактор изображения как в Telegram:
- * - перетаскивание мышью / пальцем
- * - зум слайдером
- * - предпросмотр в круглой/квадратной маске (то, что видит юзер)
- * - на выходе обрезанный квадратный PNG (data URL)
+ * Кадрирование как в Telegram:
+ * - Базовая раскладка: картинка вписана в квадрат по принципу `cover`
+ *   (минимальный масштаб, при котором квадрат полностью закрыт).
+ * - Зум: умножает базовый cover-масштаб (1× … 4×).
+ * - Drag: перетаскивание мышью / пальцем, с ограничением, чтобы пустота не появлялась.
  */
 export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: ImageCropperProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
+  const imgElRef = useRef<HTMLImageElement | null>(null);
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
-  const [scale, setScale] = useState(1); // 1 = «cover» базовый
-  const [pos, setPos] = useState({ x: 0, y: 0 }); // px смещения относительно центра
-  const [box, setBox] = useState(320); // визуальный размер квадрата
+  const [zoom, setZoom] = useState(1); // 1 = базовый cover
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [box, setBox] = useState(320);
 
-  // Загружаем размеры
   useEffect(() => {
-    if (!src) return;
-    const img = new Image();
-    img.onload = () => {
-      setNatural({ w: img.naturalWidth, h: img.naturalHeight });
-      imgRef.current = img;
-      setScale(1);
-      setPos({ x: 0, y: 0 });
-    };
-    img.src = src;
-  }, [src]);
+    if (!open) return;
+    setZoom(1);
+    setPos({ x: 0, y: 0 });
+    setNatural(null);
+  }, [src, open]);
 
-  // Адаптируем размер контейнера к ширине окна
   useEffect(() => {
     const update = () => {
       const w = containerRef.current?.clientWidth ?? 320;
@@ -51,21 +43,20 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
     return () => window.removeEventListener("resize", update);
   }, [open]);
 
-  // Базовый «cover» размер картинки внутри квадрата
-  const baseSize = (() => {
+  // Базовый cover-размер картинки в CSS-пикселях, чтобы закрыть квадрат box×box.
+  const cover = (() => {
     if (!natural) return { w: box, h: box };
     const r = natural.w / natural.h;
     if (r >= 1) {
-      // широкая → высота = box
+      // широкая → высота = box, ширина шире
       return { w: box * r, h: box };
     }
     return { w: box, h: box / r };
   })();
 
-  const drawnW = baseSize.w * scale;
-  const drawnH = baseSize.h * scale;
+  const drawnW = cover.w * zoom;
+  const drawnH = cover.h * zoom;
 
-  // Ограничения, чтобы картинка не уезжала за пределы квадрата
   const clamp = (p: { x: number; y: number }) => {
     const maxX = Math.max(0, (drawnW - box) / 2);
     const maxY = Math.max(0, (drawnH - box) / 2);
@@ -78,45 +69,40 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
   useEffect(() => {
     setPos((p) => clamp(p));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scale, box, natural]);
+  }, [zoom, box, natural?.w, natural?.h]);
 
-  // Drag
-  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setPos(clamp({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy }));
+    setPos(clamp({
+      x: dragRef.current.ox + (e.clientX - dragRef.current.sx),
+      y: dragRef.current.oy + (e.clientY - dragRef.current.sy),
+    }));
   };
-  const onPointerUp = () => {
-    dragRef.current = null;
-  };
+  const onPointerUp = () => { dragRef.current = null; };
 
   const handleConfirm = () => {
-    if (!imgRef.current || !natural) return;
-    // Соотношение пиксели исходника / пиксели на экране в режиме «cover»
-    // baseSize.w / box === naturalRatio для широких; используем масштаб от natural.
-    const natPerCss = natural.w / baseSize.w; // одинаков по обоим осям
-    // Видимый квадрат = box, в координатах исходника = box * natPerCss / scale
-    const cropSize = (box * natPerCss) / scale;
-    // Центр исходника + смещение (в пикселях исходника, инвертируем т.к. pos — смещение картинки)
-    const cx = natural.w / 2 - (pos.x * natPerCss) / scale;
-    const cy = natural.h / 2 - (pos.y * natPerCss) / scale;
-    const sx = Math.max(0, cx - cropSize / 2);
-    const sy = Math.max(0, cy - cropSize / 2);
+    if (!imgElRef.current || !natural) return;
+    // 1 CSS px === (natural.w / cover.w) пикселей исходника при zoom=1.
+    // С учётом zoom: 1 CSS px === (natural.w / cover.w / zoom) пикселей исходника.
+    const natPerCss = natural.w / cover.w / zoom;
+    const cropSize = box * natPerCss;
+    const cx = natural.w / 2 - pos.x * natPerCss;
+    const cy = natural.h / 2 - pos.y * natPerCss;
+    const sx = Math.max(0, Math.min(natural.w - cropSize, cx - cropSize / 2));
+    const sy = Math.max(0, Math.min(natural.h - cropSize, cy - cropSize / 2));
 
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(imgRef.current, sx, sy, cropSize, cropSize, 0, 0, size, size);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-    onConfirm(dataUrl);
+    ctx.drawImage(imgElRef.current, sx, sy, cropSize, cropSize, 0, 0, size, size);
+    onConfirm(canvas.toDataURL("image/jpeg", 0.9));
   };
 
   return (
@@ -137,21 +123,26 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerUp}
               >
-                {/* Картинка */}
                 <img
+                  ref={(el) => { imgElRef.current = el; }}
                   src={src}
                   alt=""
                   draggable={false}
+                  onLoad={(e) => {
+                    const el = e.currentTarget;
+                    setNatural({ w: el.naturalWidth, h: el.naturalHeight });
+                  }}
                   style={{
                     position: "absolute",
-                    width: drawnW,
-                    height: drawnH,
                     left: "50%",
                     top: "50%",
-                    transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px)`,
+                    width: `${drawnW}px`,
+                    height: `${drawnH}px`,
+                    maxWidth: "none",
+                    transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
+                    pointerEvents: "none",
                   }}
                 />
-                {/* Сетка */}
                 <div className="pointer-events-none absolute inset-0 ring-2 ring-background/60 rounded-2xl" />
                 <div className="pointer-events-none absolute inset-0">
                   <div className="absolute inset-x-0 top-1/3 border-t border-white/30" />
@@ -163,13 +154,13 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
             </div>
 
             <div className="px-2">
-              <div className="text-xs text-muted-foreground mb-1">Масштаб</div>
+              <div className="text-xs text-muted-foreground mb-1">Масштаб ×{zoom.toFixed(2)}</div>
               <Slider
-                value={[scale]}
+                value={[zoom]}
                 min={1}
-                max={3}
+                max={4}
                 step={0.01}
-                onValueChange={(v) => setScale(v[0])}
+                onValueChange={(v) => setZoom(v[0])}
               />
             </div>
 
