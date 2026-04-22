@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Copy, Clock } from "lucide-react";
 import { CRYPTO_LIST, useAccount, type CryptoCode } from "@/store/account";
 import { useAccount as useAcc2 } from "@/store/account";
 import { useI18n } from "@/lib/i18n";
-import { haptic } from "@/lib/telegram";
+import { haptic, useTelegram } from "@/lib/telegram";
 import { formatTHB } from "@/lib/format";
 import { toast } from "sonner";
 
