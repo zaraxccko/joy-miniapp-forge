@@ -169,7 +169,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
   // Geo picker — country first
   if (!selectedCountry) {
-    const awaitingCount = useAccount.getState().deposits.filter((d) => d.status === "awaiting").length;
+    const awaitingCount = useAccount.getState().orders.filter((o) => o.status === "awaiting").length;
     return (
       <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
         <header className="flex items-center justify-between mb-6">
