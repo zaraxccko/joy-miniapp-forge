@@ -29,37 +29,39 @@ export const Hero = ({ product, onClick }: HeroProps) => {
   return (
     <button
       onClick={onClick}
-      className="mx-5 mb-5 block w-[calc(100%-2.5rem)] text-left rounded-3xl gradient-hero p-5 relative overflow-hidden shadow-soft active:scale-[0.99] transition-[var(--transition-base)]"
+      className="mx-5 mb-5 block w-[calc(100%-2.5rem)] text-left rounded-3xl gradient-hero p-5 pr-[44%] relative overflow-hidden shadow-soft active:scale-[0.99] transition-[var(--transition-base)] min-h-[160px]"
     >
       <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/30 blur-2xl" />
       {product.imageUrl ? (
-        <img
-          src={product.imageUrl}
-          alt=""
-          className="absolute -right-4 -bottom-4 w-36 h-36 object-cover rounded-3xl opacity-90"
-        />
+        <div className="absolute right-3 top-3 bottom-3 w-[38%] rounded-2xl overflow-hidden shadow-card">
+          <img
+            src={product.imageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
       ) : (
-        <div className="absolute -right-2 bottom-0 text-[100px] leading-none opacity-90 select-none">
+        <div className="absolute right-2 bottom-0 text-[100px] leading-none opacity-90 select-none">
           {product.emoji}
         </div>
       )}
       <div className="relative">
-        <div className="text-[11px] font-semibold uppercase tracking-widest text-foreground/70 mb-1">
-          {t("hero.pickOfDay")}
+        <div className="text-[11px] font-semibold uppercase tracking-widest text-foreground/70 mb-1 flex items-center gap-1">
+          <span>⭐</span> {t("hero.pickOfDay")}
         </div>
-        <div className="font-display text-[22px] font-bold leading-tight text-foreground max-w-[60%]">
+        <div className="font-display text-[20px] font-bold leading-tight text-foreground">
           {loc(product.name, lang)}
         </div>
-        {promoVariant && promoPrice != null && (
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          {promoVariant && promoPrice != null && (
             <span className="bg-card/90 backdrop-blur text-foreground text-xs font-bold px-3 py-1.5 rounded-full">
               {promoVariant.grams}g · ${promoPrice}
             </span>
-            <span className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-glow">
-              🎁 +5g Free
-            </span>
-          </div>
-        )}
+          )}
+          <span className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-glow">
+            🎁 5+5g {lang === "en" ? "Free" : "в подарок"}
+          </span>
+        </div>
       </div>
     </button>
   );
