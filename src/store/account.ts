@@ -41,6 +41,10 @@ export interface Deposit {
   status: DepositStatus;
   paidAt?: string;
   confirmedAt?: string;
+  /** Telegram username/first_name юзера — для админки. */
+  customerName?: string;
+  /** Telegram ID юзера. */
+  customerTgId?: number;
 }
 
 export type OrderHistoryStatus = "awaiting" | "paid" | "in_delivery" | "completed" | "cancelled";
@@ -73,7 +77,7 @@ interface AccountState {
   deposits: Deposit[];
   orders: OrderRecord[];
 
-  createDeposit: (amountUSD: number, crypto: CryptoCode) => Deposit;
+  createDeposit: (amountUSD: number, crypto: CryptoCode, customer?: { name?: string; tgId?: number }) => Deposit;
   /** Юзер сообщил, что оплатил — депозит уходит на подтверждение админа. */
   markPaid: (id: string) => void;
   /** Админ подтверждает оплату — баланс пополняется. */
@@ -98,7 +102,7 @@ export const useAccount = create<AccountState>()(
       deposits: [],
       orders: [],
 
-      createDeposit: (amountUSD, crypto) => {
+      createDeposit: (amountUSD, crypto, customer) => {
         const meta = CRYPTO_LIST.find((c) => c.code === crypto)!;
         const dep: Deposit = {
           id: uid(),
@@ -107,6 +111,8 @@ export const useAccount = create<AccountState>()(
           crypto,
           address: meta.address,
           status: "pending",
+          customerName: customer?.name,
+          customerTgId: customer?.tgId,
         };
         set((s) => ({ deposits: [dep, ...s.deposits] }));
         return dep;

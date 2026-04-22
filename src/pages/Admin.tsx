@@ -169,7 +169,10 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
   // Geo picker — country first
   if (!selectedCountry) {
-    const awaitingCount = useAccount.getState().orders.filter((o) => o.status === "awaiting").length;
+    const accState = useAccount.getState();
+    const awaitingCount =
+      accState.orders.filter((o) => o.status === "awaiting").length +
+      accState.deposits.filter((d) => d.status === "awaiting").length;
     return (
       <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
         <header className="flex items-center justify-between mb-6">
@@ -1029,10 +1032,15 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
 const DepositsTab = () => {
   const orders = useAccount((s) => s.orders);
+  const deposits = useAccount((s) => s.deposits);
   const confirmOrder = useAccount((s) => s.confirmOrder);
   const cancelOrder = useAccount((s) => s.cancelOrder);
+  const confirmDeposit = useAccount((s) => s.confirmDeposit);
+  const cancelDeposit = useAccount((s) => s.cancelDeposit);
 
   const awaitingOrders = orders.filter((o) => o.status === "awaiting");
+  const awaitingDeposits = deposits.filter((d) => d.status === "awaiting");
+  const historyDeposits = deposits.filter((d) => d.status === "confirmed" || d.status === "cancelled");
 
   const [confirmTarget, setConfirmTarget] = useState<OrderRecord | null>(null);
   const [photo, setPhoto] = useState<string>("");
@@ -1208,6 +1216,59 @@ const DepositsTab = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* === Заявки на ПОПОЛНЕНИЕ БАЛАНСА (без заказа) === */}
+      <div>
+        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
+          Пополнения баланса — ждут подтверждения ({awaitingDeposits.length})
+        </div>
+        {awaitingDeposits.length === 0 ? (
+          <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
+            Нет новых заявок
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {awaitingDeposits.map((d) => (
+              <div key={d.id} className="bg-card rounded-2xl p-3 shadow-card space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-display font-bold text-lg">+${d.amountUSD}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {d.customerName ?? (d.customerTgId ? `TG ${d.customerTgId}` : "Гость")} · {fmt(d.createdAt)}
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClass.awaiting}`}>
+                    Пополнение
+                  </span>
+                </div>
+                <div className="rounded-xl bg-background px-2.5 py-2 text-[11px] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Оплата</span>
+                    <span className="font-bold">{d.crypto} · ${d.amountUSD}</span>
+                  </div>
+                  <div className="font-mono break-all text-foreground/70">{d.address}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => confirmDeposit(d.id)}
+                    className="flex-1 gradient-primary text-primary-foreground font-bold py-2 rounded-xl flex items-center justify-center gap-1 active:scale-95"
+                  >
+                    <Check className="w-4 h-4" /> Зачислить на баланс
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Отклонить пополнение?")) cancelDeposit(d.id);
+                    }}
+                    className="flex-1 bg-background border border-border font-bold py-2 rounded-xl flex items-center justify-center gap-1 active:scale-95 text-destructive"
+                  >
+                    <X className="w-4 h-4" /> Отклонить
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
