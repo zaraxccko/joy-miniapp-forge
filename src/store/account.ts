@@ -94,8 +94,8 @@ export const useAccount = create<AccountState>((set, get) => ({
       ]);
       set({
         balanceUSD: me?.balanceUSD ?? 0,
-        deposits: deps as Deposit[],
-        orders: ords as OrderRecord[],
+        deposits: Array.isArray(deps) ? (deps as Deposit[]) : [],
+        orders: Array.isArray(ords) ? (ords as OrderRecord[]) : [],
       });
     } catch {
       // ignore
