@@ -57,6 +57,10 @@ export interface OrderRecord {
   customerName?: string;
   /** Telegram ID юзера. */
   customerTgId?: number;
+  /** Крипта, которой клиент оплатил заказ. */
+  crypto?: CryptoCode;
+  /** Адрес кошелька, на который ушла оплата. */
+  payAddress?: string;
   /** Фото-подтверждение (закладки) от админа, dataURL. */
   confirmPhoto?: string;
   /** Сопроводительный текст от админа. */
