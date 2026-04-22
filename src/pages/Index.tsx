@@ -42,12 +42,12 @@ const Index = () => {
   useEffect(() => {
     if (user?.id) {
       loginWithTelegram(user.id);
-    } else if (import.meta.env.DEV) {
+    } else {
+      // ⚠️ ВРЕМЕННО: автологин админа в превью (без Telegram).
+      // Убери эту ветку перед продакшеном.
       loginWithTelegram(8044243116);
-    } else if (isAdmin) {
-      logout();
     }
-  }, [user?.id, isAdmin, loginWithTelegram, logout]);
+  }, [user?.id, loginWithTelegram]);
 
   const [category, setCategory] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
