@@ -97,6 +97,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
   const [editingP, setEditingP] = useState<Product | null>(null);
   const [editingC, setEditingC] = useState<Category | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const allCities = COUNTRIES.flatMap((c) => c.cities.map((city) => ({ ...city, country: c })));
@@ -512,9 +513,10 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
                     accept="image/*"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
+                      e.currentTarget.value = "";
                       if (!file) return;
                       const url = await fileToDataUrl(file);
-                      setEditingP({ ...editingP, imageUrl: url });
+                      setCropSrc(url);
                     }}
                     className="text-xs"
                   />
