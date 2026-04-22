@@ -49,7 +49,14 @@ export async function api<T = unknown>(path: string, init: ReqInit = {}): Promis
   }
 
   const res = await fetch(`${BASE}${path}`, { ...init, headers, body });
+  const contentType = res.headers.get("content-type") ?? "";
   const text = await res.text();
+  if (looksLikeHtml(contentType, text)) {
+    throw new ApiError(502, "API returned HTML instead of JSON", {
+      error: "api_misconfigured",
+      path: `${BASE}${path}`,
+    });
+  }
   const data = text ? safeJson(text) : null;
 
   if (!res.ok) {
@@ -60,6 +67,12 @@ export async function api<T = unknown>(path: string, init: ReqInit = {}): Promis
 
 function safeJson(s: string) {
   try { return JSON.parse(s); } catch { return s; }
+}
+
+function looksLikeHtml(contentType: string, text: string) {
+  if (/text\/html/i.test(contentType)) return true;
+  const trimmed = text.trimStart().slice(0, 64).toLowerCase();
+  return trimmed.startsWith("<!doctype html") || trimmed.startsWith("<html");
 }
 
 // ============================================================

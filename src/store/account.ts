@@ -6,6 +6,13 @@ import type { CartLine } from "@/types/shop";
 import { Deposits, Orders, Admin, Auth } from "@/lib/api";
 import { toast } from "sonner";
 
+const isApiMisconfigured = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "body" in error &&
+  typeof (error as { body?: unknown }).body === "object" &&
+  (error as { body?: { error?: string } }).body?.error === "api_misconfigured";
+
 export type CryptoCode = "BTC" | "TRX" | "SOL" | "TON" | "USDT";
 
 // Адреса дублируются на бэке (см. backend/src/routes/deposits.ts).
@@ -112,7 +119,9 @@ export const useAccount = create<AccountState>((set, get) => ({
       // бэк всё равно создаёт pending-запись на статичный кошелёк.
       const status = e?.status as number | undefined;
       const code = e?.body?.error as string | undefined;
-      if (status === 401) {
+      if (code === "api_misconfigured") {
+        toast.error("API не подключён: проверь backend и /api прокси");
+      } else if (status === 401) {
         toast.error("Сессия истекла — перезайдите через Telegram");
       } else if (code === "gateway_unavailable") {
         toast.message("Платёжный шлюз недоступен — заявка создана как pending");
@@ -128,7 +137,7 @@ export const useAccount = create<AccountState>((set, get) => ({
       const updated = (await Deposits.markPaid(id)) as Deposit;
       set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
     } catch (e) {
-      toast.error("Не удалось отметить оплату");
+      toast.error(isApiMisconfigured(e) ? "API не подключён: проверь backend и /api прокси" : "Не удалось отметить оплату");
       throw e;
     }
   },
@@ -138,7 +147,7 @@ export const useAccount = create<AccountState>((set, get) => ({
       const updated = (await Deposits.cancel(id)) as Deposit;
       set((s) => ({ deposits: s.deposits.map((d) => (d.id === id ? updated : d)) }));
     } catch (e) {
-      toast.error("Не удалось отменить заявку");
+      toast.error(isApiMisconfigured(e) ? "API не подключён: проверь backend и /api прокси" : "Не удалось отменить заявку");
       throw e;
     }
   },
