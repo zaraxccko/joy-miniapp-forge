@@ -1,0 +1,29 @@
+# ============================================================
+# Edge reverse-proxy для prxvt.ink
+# Caddy сам выпускает Let's Encrypt сертификат.
+# Запускается как сервис `proxy` в docker-compose.
+# ============================================================
+
+prxvt.ink, www.prxvt.ink {
+	encode gzip zstd
+
+	# API → backend
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Загрузки фото-подтверждений
+	handle /uploads/* {
+		reverse_proxy api:3000
+	}
+
+	# Всё остальное → фронт (SPA)
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

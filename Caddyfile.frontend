@@ -1,0 +1,8 @@
+# Внутренний Caddy в контейнере фронта.
+# Отдаёт собранный SPA. Внешний reverse-proxy (root Caddyfile) проксирует сюда.
+:80 {
+	root * /srv
+	encode gzip zstd
+	try_files {path} /index.html
+	file_server
+}
