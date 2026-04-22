@@ -1,9 +1,11 @@
-import { ShoppingBag, MapPin, Shield, User as UserIcon } from "lucide-react";
+import { ShoppingBag, MapPin, Shield, User as UserIcon, RotateCcw } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { haptic } from "@/lib/telegram";
 import { useI18n, useT } from "@/lib/i18n";
 import { useLocation } from "@/store/location";
+import { useSubscription } from "@/store/subscription";
 import { findCity } from "@/data/locations";
+import { toast } from "sonner";
 import logo from "@/assets/logo.webp";
 
 interface HeaderProps {
