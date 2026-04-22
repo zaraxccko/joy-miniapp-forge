@@ -147,10 +147,34 @@ export const useAccount = create<AccountState>()(
           items: o.items,
           delivery: o.delivery,
           deliveryAddress: o.deliveryAddress,
+          customerName: o.customerName,
+          customerTgId: o.customerTgId,
         };
         set((s) => ({ orders: [order, ...s.orders] }));
         return order;
       },
+
+      confirmOrder: (id, payload) =>
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === id
+              ? {
+                  ...o,
+                  status: "paid",
+                  confirmPhoto: payload.photo,
+                  confirmText: payload.text,
+                  confirmedAt: new Date().toISOString(),
+                }
+              : o
+          ),
+        })),
+
+      cancelOrder: (id) =>
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === id ? { ...o, status: "cancelled" } : o
+          ),
+        })),
 
       spend: (amountUSD) => {
         const { balanceUSD } = get();
