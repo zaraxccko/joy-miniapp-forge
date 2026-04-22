@@ -54,6 +54,10 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
     return { w: box, h: box / r };
   })();
 
+  // Минимальный зум, чтобы картинка целиком влезла в квадрат (contain).
+  // Для cover-базы это меньшая сторона / большую → <1 для непрямоугольных.
+  const minZoom = natural ? Math.min(box / cover.w, box / cover.h) : 1;
+
   const drawnW = cover.w * zoom;
   const drawnH = cover.h * zoom;
 
@@ -87,22 +91,40 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
 
   const handleConfirm = () => {
     if (!imgElRef.current || !natural) return;
-    // 1 CSS px === (natural.w / cover.w) пикселей исходника при zoom=1.
-    // С учётом zoom: 1 CSS px === (natural.w / cover.w / zoom) пикселей исходника.
     const natPerCss = natural.w / cover.w / zoom;
     const cropSize = box * natPerCss;
     const cx = natural.w / 2 - pos.x * natPerCss;
     const cy = natural.h / 2 - pos.y * natPerCss;
-    const sx = Math.max(0, Math.min(natural.w - cropSize, cx - cropSize / 2));
-    const sy = Math.max(0, Math.min(natural.h - cropSize, cy - cropSize / 2));
 
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(imgElRef.current, sx, sy, cropSize, cropSize, 0, 0, size, size);
-    onConfirm(canvas.toDataURL("image/jpeg", 0.9));
+
+    // Фон (на случай, если картинка меньше квадрата — fit-режим).
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, size, size);
+
+    // Сколько от исходника помещается в квадрат (может выходить за границы — это ок,
+    // drawImage сам обрежет; пустоты будут залиты фоном выше).
+    const sx = cx - cropSize / 2;
+    const sy = cy - cropSize / 2;
+
+    // Если sx/sy отрицательные или выходят за natural, нужно скорректировать
+    // и source-, и dest-координаты, чтобы не растягивать.
+    let srcX = sx, srcY = sy, srcW = cropSize, srcH = cropSize;
+    let dstX = 0, dstY = 0, dstW = size, dstH = size;
+    const scale = size / cropSize;
+    if (srcX < 0) { dstX = -srcX * scale; dstW += srcX * scale; srcW += srcX; srcX = 0; }
+    if (srcY < 0) { dstY = -srcY * scale; dstH += srcY * scale; srcH += srcY; srcY = 0; }
+    if (srcX + srcW > natural.w) { const over = srcX + srcW - natural.w; srcW -= over; dstW -= over * scale; }
+    if (srcY + srcH > natural.h) { const over = srcY + srcH - natural.h; srcH -= over; dstH -= over * scale; }
+
+    if (srcW > 0 && srcH > 0) {
+      ctx.drawImage(imgElRef.current, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
+    }
+    onConfirm(canvas.toDataURL("image/jpeg", 0.92));
   };
 
   return (
@@ -154,10 +176,28 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
             </div>
 
             <div className="px-2">
-              <div className="text-xs text-muted-foreground mb-1">Масштаб ×{zoom.toFixed(2)}</div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-muted-foreground">Масштаб ×{zoom.toFixed(2)}</div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="text-[11px] text-primary font-medium active:opacity-70"
+                    onClick={() => { setZoom(minZoom); setPos({ x: 0, y: 0 }); }}
+                  >
+                    Вписать всю
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[11px] text-primary font-medium active:opacity-70"
+                    onClick={() => { setZoom(1); setPos({ x: 0, y: 0 }); }}
+                  >
+                    Заполнить
+                  </button>
+                </div>
+              </div>
               <Slider
                 value={[zoom]}
-                min={1}
+                min={Math.min(minZoom, 1)}
                 max={4}
                 step={0.01}
                 onValueChange={(v) => setZoom(v[0])}
