@@ -210,12 +210,6 @@ export const ImageCropper = ({ open, src, size = 512, onCancel, onConfirm }: Ima
           </div>
         )}
 
-            <div className="text-[11px] text-muted-foreground text-center">
-              Перетащите картинку, чтобы выбрать видимую область
-            </div>
-          </div>
-        )}
-
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={onCancel}>Отмена</Button>
           <Button onClick={handleConfirm}>Сохранить</Button>
