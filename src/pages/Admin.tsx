@@ -102,7 +102,6 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const refreshAll = useAdminPanel((s) => s.refreshAll);
   const awaitingOrders = useAdminPanel((s) => s.awaitingOrders);
-  const awaitingDeposits = useAdminPanel((s) => s.awaitingDeposits);
 
   useEffect(() => {
     refreshAll();
@@ -177,7 +176,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
   // Geo picker — country first
   if (!selectedCountry) {
-    const awaitingCount = awaitingOrders.length + awaitingDeposits.length;
+    const awaitingCount = awaitingOrders.length;
     return (
       <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
         <header className="flex items-center justify-between mb-6">
@@ -202,7 +201,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
             <div className="font-bold text-sm">Подтверждение оплат</div>
             <div className="text-[11px] text-muted-foreground">
               {awaitingCount > 0
-                ? `${awaitingOrders.length} заказов · ${awaitingDeposits.length} пополнений`
+                ? `${awaitingOrders.length} новых заказов`
                 : "Нет новых заявок"}
             </div>
           </div>
