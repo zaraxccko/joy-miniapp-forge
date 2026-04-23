@@ -42,8 +42,19 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
   const reservedAt = useCart((s) => s.reservedAt);
   const clearCart = useCart((s) => s.clear);
 
-  /** Самый свежий заказ, ожидающий подтверждения админом. */
-  const awaitingOrder = orders.find((o) => o.status === "awaiting") ?? null;
+  /**
+   * Активная карточка: либо заказ в ожидании, либо только что подтверждённый
+   * (показываем данные от админа, пока юзер не закроет/не сделает новый заказ).
+   * Отменённые заказы сюда не попадают — они уходят сразу в историю.
+   */
+  const activeOrder =
+    orders.find((o) => o.status === "awaiting") ??
+    orders.find((o) => (o.status === "completed" || o.status === "paid" || o.status === "in_delivery") && (o.confirmPhoto || o.confirmText)) ??
+    null;
+  const awaitingOrder = activeOrder?.status === "awaiting" ? activeOrder : null;
+  const confirmedOrder = activeOrder && activeOrder.status !== "awaiting" ? activeOrder : null;
+  // Скрываем подтверждённый заказ из истории, чтобы не дублировать.
+  const historyOrders = orders.filter((o) => o.id !== confirmedOrder?.id);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -131,7 +142,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
             <div className="font-display font-bold text-lg flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" /> {tr("Активный заказ", "Active order")}
             </div>
-            {cartLines.length > 0 && !awaitingOrder && (
+            {cartLines.length > 0 && !awaitingOrder && !confirmedOrder && (
               <button onClick={onOpenActiveOrder} className="text-xs font-bold text-primary">
                 {tr("Открыть", "Open")}
               </button>
@@ -159,6 +170,37 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
                     "Submitted — waiting for admin response"
                   )}
                 </div>
+              </div>
+            </div>
+          ) : confirmedOrder ? (
+            <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">
+                  #{confirmedOrder.id}
+                </div>
+                <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-emerald-500/15 text-emerald-600">
+                  {tr("Оплата подтверждена", "Payment confirmed")}
+                </span>
+              </div>
+              <div className="font-display font-bold text-xl">{formatTHB(confirmedOrder.totalUSD)}</div>
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                  {tr("Данные от магазина", "Details from shop")}
+                </div>
+                {confirmedOrder.confirmPhoto && (
+                  <a href={confirmedOrder.confirmPhoto} target="_blank" rel="noreferrer" className="block">
+                    <img
+                      src={confirmedOrder.confirmPhoto}
+                      alt="confirm"
+                      className="w-full max-h-72 object-cover rounded-lg"
+                    />
+                  </a>
+                )}
+                {confirmedOrder.confirmText && (
+                  <div className="text-sm text-foreground/90 whitespace-pre-wrap">
+                    {confirmedOrder.confirmText}
+                  </div>
+                )}
               </div>
             </div>
           ) : cartLines.length === 0 ? (
@@ -225,13 +267,13 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
           <div className="font-display font-bold text-lg mb-2 flex items-center gap-2">
             <Package className="w-4 h-4" /> {tr("История заказов", "Order history")}
           </div>
-          {orders.length === 0 ? (
+          {historyOrders.length === 0 ? (
             <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
               {tr("Заказов пока нет", "No orders yet")}
             </div>
           ) : (
             <div className="space-y-2">
-              {orders.slice(0, 5).map((o) => {
+              {historyOrders.slice(0, 5).map((o) => {
                 const m = statusMeta[o.status];
                 return (
                   <div key={o.id} className="rounded-2xl bg-card shadow-card p-3">
