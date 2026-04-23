@@ -1233,100 +1233,14 @@ const DepositsTab = () => {
         )}
       </div>
 
-      {/* === Заявки на ПОПОЛНЕНИЕ БАЛАНСА (без заказа) === */}
-      <div>
-        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
-          Пополнения баланса — ждут подтверждения ({awaitingDeposits.length})
-        </div>
-        {awaitingDeposits.length === 0 ? (
-          <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
-            Нет новых заявок
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {awaitingDeposits.map((d) => (
-              <div key={d.id} className="bg-card rounded-2xl p-3 shadow-card space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-display font-bold text-lg">+${d.amountUSD}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">
-                      {d.customerName ?? (d.customerTgId ? `TG ${d.customerTgId}` : "Гость")} · {fmt(d.createdAt)}
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClass.awaiting}`}>
-                    Пополнение
-                  </span>
-                </div>
-                <div className="rounded-xl bg-background px-2.5 py-2 text-[11px] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Оплата</span>
-                    <span className="font-bold">{d.crypto} · ${d.amountUSD}</span>
-                  </div>
-                  <div className="font-mono break-all text-foreground/70">{d.address}</div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => confirmDeposit(d.id)}
-                    className="flex-1 gradient-primary text-primary-foreground font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95"
-                  >
-                    <Check className="w-4 h-4 shrink-0" /> <span>Зачислить</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm("Отклонить пополнение?")) cancelDeposit(d.id);
-                    }}
-                    className="flex-1 bg-background border border-border font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 text-destructive"
-                  >
-                    <X className="w-4 h-4 shrink-0" /> <span>Отклонить</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* === История заказов и пополнений === */}
+      {/* === История заказов === */}
       {(() => {
-        type HistoryItem =
-          | { kind: "order"; id: string; createdAt: string; status: string; totalUSD: number; crypto?: string; customerName?: string; customerTgId?: number }
-          | { kind: "deposit"; id: string; createdAt: string; status: string; totalUSD: number; crypto?: string; customerName?: string; customerTgId?: number };
-
-        const orderItems: HistoryItem[] = historyOrders
-          .map((o) => ({
-            kind: "order",
-            id: o.id,
-            createdAt: o.createdAt,
-            status: o.status,
-            totalUSD: o.totalUSD,
-            crypto: o.crypto,
-            customerName: o.customerName,
-            customerTgId: o.customerTgId,
-          }));
-
-        const depositItems: HistoryItem[] = historyDeposits
-          .filter((d) => !(d.status === "cancelled" && !d.paidAt))
-          .map((d) => ({
-            kind: "deposit",
-            id: d.id,
-            createdAt: d.createdAt,
-            status: d.status,
-            totalUSD: d.amountUSD,
-            crypto: d.crypto,
-            customerName: d.customerName,
-            customerTgId: d.customerTgId,
-          }));
-
-        const historyItems = [...orderItems, ...depositItems].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
         const statusLabel: Record<string, string> = {
           paid: "Подтверждён",
           in_delivery: "В доставке",
           completed: "Подтверждён",
           cancelled: "Отменён",
-          confirmed: "Зачислено",
+          confirmed: "Подтверждён",
         };
         const statusClassMap: Record<string, string> = {
           paid: "bg-emerald-500/15 text-emerald-600",
@@ -1338,22 +1252,19 @@ const DepositsTab = () => {
         return (
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2 mt-4">
-              История ({historyItems.length})
+              История ({historyOrders.length})
             </div>
-            {historyItems.length === 0 ? (
+            {historyOrders.length === 0 ? (
               <div className="bg-card rounded-2xl p-4 text-center text-sm text-muted-foreground shadow-card">
                 Пусто
               </div>
             ) : (
-              <div className={`space-y-2 ${historyItems.length > 10 ? "max-h-[640px] overflow-y-auto pr-1 -mr-1" : ""}`}>
-                {historyItems.map((it) => (
-                  <div key={`${it.kind}-${it.id}`} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between gap-2">
+              <div className={`space-y-2 ${historyOrders.length > 10 ? "max-h-[640px] overflow-y-auto pr-1 -mr-1" : ""}`}>
+                {historyOrders.map((it) => (
+                  <div key={`order-${it.id}`} className="bg-card rounded-2xl p-3 shadow-card flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-bold flex items-center gap-1.5">
-                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${it.kind === "deposit" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                          {it.kind === "deposit" ? "Пополнение" : "Заказ"}
-                        </span>
-                        <span>{it.kind === "deposit" ? "+" : ""}${it.totalUSD}{it.crypto ? ` · ${it.crypto}` : ""}</span>
+                        <span>${it.totalUSD}{it.crypto ? ` · ${it.crypto}` : ""}</span>
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
                         {it.customerName ?? (it.customerTgId ? `TG ${it.customerTgId}` : "Гость")} · {fmt(it.createdAt)}
