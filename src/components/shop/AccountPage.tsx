@@ -138,10 +138,23 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
 
   // ── Поддержка ────────────────────────────────────────────────
   const openSupport = () => {
+    haptic("light");
     const url = `https://t.me/${SUPPORT_USERNAME}`;
     const tgAny = tg as any;
-    if (tgAny?.openTelegramLink) tgAny.openTelegramLink(url);
-    else window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      if (tgAny?.openTelegramLink) {
+        tgAny.openTelegramLink(url);
+        return;
+      }
+    } catch {}
+    // Fallback: работает и в iframe-превью, и в обычном браузере
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   return (
