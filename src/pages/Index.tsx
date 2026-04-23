@@ -68,13 +68,9 @@ const Index = () => {
   const [depositSuggested, setDepositSuggested] = useState<number | undefined>(undefined);
   const [orderPayOpen, setOrderPayOpen] = useState(false);
 
-  const balance = useAccount((s) => s.balanceUSD);
-  const addOrder = useAccount((s) => s.addOrder);
   const cartLines = useCart((s) => s.lines);
-  const cartTotal = useCart((s) => s.totalTHB());
   const cartDelivery = useCart((s) => s.delivery);
   const cartAddress = useCart((s) => s.deliveryAddress);
-  const clearCart = useCart((s) => s.clear);
   const captchaPassed = useCaptcha((s) => s.passed);
 
   const handleCheckout = async () => {
@@ -83,41 +79,8 @@ const Index = () => {
       toast.error(lang === "en" ? "Please enter delivery address" : "Укажите адрес доставки");
       return;
     }
-    if (balance < cartTotal) {
-      const shortfall = Math.max(0, cartTotal - balance);
-      setDepositSuggested(shortfall);
-      setCartOpen(false);
-      setDepositOpen(true);
-      toast(
-        lang === "en"
-          ? `Top up $${shortfall} to complete the order`
-          : `Пополните баланс на $${shortfall} для оформления`
-      );
-      return;
-    }
-    const customerName = user?.first_name
-      ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
-      : user?.username ? `@${user.username}` : undefined;
-    try {
-      await addOrder({
-        totalUSD: cartTotal,
-        items: cartLines,
-        delivery: cartDelivery,
-        deliveryAddress: cartDelivery ? cartAddress : undefined,
-        status: "awaiting",
-        customerName,
-        customerTgId: user?.id,
-      });
-      clearCart();
-      setCartOpen(false);
-      toast.success(lang === "en" ? "Order placed!" : "Заказ оформлен!");
-      setShowAccount(true);
-    } catch (e: any) {
-      const msg = e?.body?.error === "insufficient_balance"
-        ? (lang === "en" ? "Not enough balance" : "Недостаточно средств")
-        : (lang === "en" ? "Order failed" : "Не удалось оформить заказ");
-      toast.error(msg);
-    }
+    setCartOpen(false);
+    setOrderPayOpen(true);
   };
 
   const cityInfo = city ? findCity(city) : null;

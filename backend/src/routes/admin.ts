@@ -181,25 +181,15 @@ export async function adminRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const order = await prisma.order.findUnique({ where: { id: req.params.id } });
       if (!order) return reply.code(404).send({ error: "not_found" });
-      // возвращаем баланс
-      const updated = await prisma.$transaction(async (tx) => {
-        const u = await tx.order.update({
-          where: { id: order.id },
-          data: { status: "cancelled" },
-        });
-        if (order.status === "awaiting" || order.status === "paid") {
-          await tx.user.update({
-            where: { tgId: order.userTgId },
-            data: { balanceUSD: { increment: order.totalUSD } },
-          });
-        }
-        return u;
+      const updated = await prisma.order.update({
+        where: { id: order.id },
+        data: { status: "cancelled" },
       });
       try {
         const { bot } = await import("../bot.js");
         await bot.sendMessage(
           Number(order.userTgId),
-          `❌ Ваш заказ #${order.id} отклонён. Баланс возвращён.`
+          `❌ Ваш заказ #${order.id} отклонён.`
         );
       } catch {}
       return serializeOrder(updated);

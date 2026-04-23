@@ -36,7 +36,7 @@ const CreateOrderSchema = z.object({
 });
 
 export async function orderRoutes(app: FastifyInstance) {
-  /** POST /api/orders — оформить заказ. Списывает с баланса в одной транзакции. */
+  /** POST /api/orders — оформить заказ и отправить его в админку на подтверждение. */
   app.post("/orders", { preHandler: requireAuth }, async (req, reply) => {
     const parsed = CreateOrderSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -56,37 +56,23 @@ export async function orderRoutes(app: FastifyInstance) {
       priceUSD: item.priceUSD ?? 0,
     }));
 
-    const order = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({ where: { tgId: req.user!.tgId } });
-      if (!user) throw new Error("user_not_found");
-      if (user.balanceUSD < data.totalUSD) throw new Error("insufficient_balance");
+    const user = await prisma.user.findUnique({ where: { tgId: req.user!.tgId } });
+    if (!user) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
 
-      await tx.user.update({
-        where: { tgId: user.tgId },
-        data: { balanceUSD: { decrement: data.totalUSD } },
-      });
-
-      return tx.order.create({
-        data: {
-          userTgId: user.tgId,
-          totalUSD: data.totalUSD,
-          items: snapshotItems as any,
-          delivery: data.delivery,
-          deliveryAddress: data.deliveryAddress ?? undefined,
-          crypto: data.crypto ?? undefined,
-          payAddress: data.payAddress ?? undefined,
-          status: "awaiting",
-        },
-      });
+    const order = await prisma.order.create({
+      data: {
+        userTgId: user.tgId,
+        totalUSD: data.totalUSD,
+        items: snapshotItems as any,
+        delivery: data.delivery,
+        deliveryAddress: data.deliveryAddress ?? undefined,
+        crypto: data.crypto ?? undefined,
+        payAddress: data.payAddress ?? undefined,
+        status: "awaiting",
+      },
     }).catch((e: Error) => {
-      if (e.message === "insufficient_balance") {
-        reply.code(402).send({ error: "insufficient_balance" });
-        return null;
-      }
-      if (e.message === "user_not_found") {
-        reply.code(401).send({ error: "unauthorized" });
-        return null;
-      }
       req.log.error({ err: e }, "failed to create order");
       reply.code(500).send({ error: "internal" });
       return null;
@@ -95,7 +81,6 @@ export async function orderRoutes(app: FastifyInstance) {
     if (!order) return;
 
     try {
-      const user = await prisma.user.findUnique({ where: { tgId: req.user!.tgId } });
       const who = user?.username ? `@${user.username}` : user?.firstName ?? `tg:${order.userTgId}`;
       const itemsCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
       const text =
