@@ -172,6 +172,37 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
                 </div>
               </div>
             </div>
+          ) : confirmedOrder ? (
+            <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">
+                  #{confirmedOrder.id}
+                </div>
+                <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-emerald-500/15 text-emerald-600">
+                  {tr("Оплата подтверждена", "Payment confirmed")}
+                </span>
+              </div>
+              <div className="font-display font-bold text-xl">{formatTHB(confirmedOrder.totalUSD)}</div>
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                  {tr("Данные от магазина", "Details from shop")}
+                </div>
+                {confirmedOrder.confirmPhoto && (
+                  <a href={confirmedOrder.confirmPhoto} target="_blank" rel="noreferrer" className="block">
+                    <img
+                      src={confirmedOrder.confirmPhoto}
+                      alt="confirm"
+                      className="w-full max-h-72 object-cover rounded-lg"
+                    />
+                  </a>
+                )}
+                {confirmedOrder.confirmText && (
+                  <div className="text-sm text-foreground/90 whitespace-pre-wrap">
+                    {confirmedOrder.confirmText}
+                  </div>
+                )}
+              </div>
+            </div>
           ) : cartLines.length === 0 ? (
             <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
               {tr("Корзина пуста", "Cart is empty")}
