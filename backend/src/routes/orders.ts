@@ -94,10 +94,11 @@ export async function orderRoutes(app: FastifyInstance) {
       try {
         const who = user.username ? `@${user.username}` : user.firstName ?? `tg:${order.userTgId}`;
         const itemsCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
+        const cryptoLine = order.crypto ? ` (${order.crypto})` : "";
         const text =
           `🛒 <b>Новая заявка на заказ</b> #${order.id}\n` +
           `👤 ${who}\n` +
-          `💰 $${order.totalUSD.toFixed(2)}\n` +
+          `💰 $${order.totalUSD.toFixed(2)}${cryptoLine}\n` +
           `📦 позиций: ${itemsCount}` +
           (order.delivery ? `\n🚚 доставка: ${order.deliveryAddress ?? "—"}` : "");
         notifyAdmins(text).catch((err) =>
