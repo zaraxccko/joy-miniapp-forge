@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useAccount, type OrderRecord } from "@/store/account";
 import { useCart, RESERVATION_MS } from "@/store/cart";
 import { useI18n } from "@/lib/i18n";
-import { useTelegram, haptic, isTelegramClient } from "@/lib/telegram";
+import { useTelegram, haptic } from "@/lib/telegram";
 import { useCatalog } from "@/store/catalog";
 import { formatTHB } from "@/lib/format";
 import { loc } from "@/lib/loc";
@@ -142,38 +142,21 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     const tgAny = tg as any;
     const httpsLink = `https://t.me/${SUPPORT_USERNAME}`;
     const tgDeepLink = `tg://resolve?domain=${SUPPORT_USERNAME}`;
-    const inTelegramClient = isTelegramClient(tg);
-    const openBrowserLink = () => {
-      // Открываем в новой вкладке верхнего окна, чтобы не ломать iframe превью Lovable
-      const a = document.createElement("a");
-      a.href = httpsLink;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    };
 
-    if (!inTelegramClient) {
-      openBrowserLink();
-      return;
-    }
-
-    // 1) openTelegramLink с https — самый стабильный вариант внутри Telegram
-    if (tgAny?.openTelegramLink) {
-      try { tgAny.openTelegramLink(httpsLink); return; } catch {}
-    }
-    // 2) openLink с https — fallback для старых клиентов
-    if (tgAny?.openLink) {
-      try { tgAny.openLink(httpsLink); return; } catch {}
-    }
-    // 3) tg:// как запасной вариант только внутри Telegram
+    // 1) tg:// deep-link через openLink — самый надёжный путь, открывает чат поверх Mini App
     if (tgAny?.openLink) {
       try { tgAny.openLink(tgDeepLink); return; } catch {}
     }
+    // 2) openTelegramLink (требует https://t.me/...)
+    if (tgAny?.openTelegramLink) {
+      try { tgAny.openTelegramLink(httpsLink); return; } catch {}
+    }
+    // 3) openLink с https — fallback
+    if (tgAny?.openLink) {
+      try { tgAny.openLink(httpsLink); return; } catch {}
+    }
     // 4) Браузер / iframe — обычная ссылка
-    try { openBrowserLink(); return; } catch {}
-    window.location.href = httpsLink;
+    window.open(httpsLink, "_blank", "noopener,noreferrer");
   };
 
   return (

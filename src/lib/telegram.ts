@@ -9,7 +9,6 @@ interface TgUser {
 }
 
 interface TelegramWebApp {
-  version?: string;
   initData: string;
   initDataUnsafe?: { user?: TgUser };
   ready: () => void;
@@ -19,8 +18,6 @@ interface TelegramWebApp {
   themeParams: Record<string, string>;
   setHeaderColor: (color: string) => void;
   setBackgroundColor: (color: string) => void;
-  openLink?: (url: string) => void;
-  openTelegramLink?: (url: string) => void;
   HapticFeedback?: {
     impactOccurred: (style: "light" | "medium" | "heavy" | "rigid" | "soft") => void;
     notificationOccurred: (type: "error" | "success" | "warning") => void;
@@ -52,12 +49,6 @@ declare global {
 
 export function getTg(): TelegramWebApp | null {
   return typeof window !== "undefined" ? window.Telegram?.WebApp ?? null : null;
-}
-
-export function isTelegramClient(tg: TelegramWebApp | null = getTg()) {
-  if (!tg) return false;
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
-  return Boolean(tg.initData || ua.includes("telegram") || ua.includes("tgwebapp"));
 }
 
 export function useTelegram() {
