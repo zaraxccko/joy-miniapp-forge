@@ -143,16 +143,19 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     const httpsLink = `https://t.me/${SUPPORT_USERNAME}`;
     const tgDeepLink = `tg://resolve?domain=${SUPPORT_USERNAME}`;
 
-    if (tgAny?.openTelegramLink) {
-      try {
-        tgAny.openTelegramLink(httpsLink);
-        return;
-      } catch {}
-    }
+    // 1) tg:// deep-link через openLink — самый надёжный путь, открывает чат поверх Mini App
     if (tgAny?.openLink) {
       try { tgAny.openLink(tgDeepLink); return; } catch {}
+    }
+    // 2) openTelegramLink (требует https://t.me/...)
+    if (tgAny?.openTelegramLink) {
+      try { tgAny.openTelegramLink(httpsLink); return; } catch {}
+    }
+    // 3) openLink с https — fallback
+    if (tgAny?.openLink) {
       try { tgAny.openLink(httpsLink); return; } catch {}
     }
+    // 4) Браузер / iframe — обычная ссылка
     window.open(httpsLink, "_blank", "noopener,noreferrer");
   };
 
