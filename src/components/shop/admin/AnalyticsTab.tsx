@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TabsContent } from "@/components/ui/tabs";
 import { TrendingUp, Users, ShoppingBag, DollarSign, Activity } from "lucide-react";
-import { MOCK_ANALYTICS } from "@/lib/analyticsMock";
+import { useAdminPanel } from "@/store/adminPanel";
 
 const KPI = ({
   icon: Icon,
@@ -126,7 +126,7 @@ const FunnelRow = ({
 };
 
 export const AnalyticsTab = () => {
-  const a = MOCK_ANALYTICS;
+  const a = useAdminPanel((s) => s.analytics);
   return (
     <TabsContent value="analytics" className="space-y-4 mt-4">
       {/* KPI grid */}

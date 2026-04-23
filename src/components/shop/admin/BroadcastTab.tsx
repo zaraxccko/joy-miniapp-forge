@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { haptic } from "@/lib/telegram";
-import { MOCK_ANALYTICS } from "@/lib/analyticsMock";
+import { useAdminPanel } from "@/store/adminPanel";
+import { Admin } from "@/lib/api";
 
 type Segment = "all" | "buyers" | "non_buyers" | "active_7d";
 
@@ -34,6 +35,7 @@ const fileToDataUrl = (file: File) =>
   });
 
 export const BroadcastTab = () => {
+  const analytics = useAdminPanel((s) => s.analytics);
   const [text, setText] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [btnText, setBtnText] = useState("");
@@ -42,7 +44,7 @@ export const BroadcastTab = () => {
   const [sending, setSending] = useState(false);
 
   const recipients = useMemo(() => {
-    const users = MOCK_ANALYTICS.totals.users;
+    const users = analytics.totals.users;
     const ordersFraction = 0.49;
     switch (segment) {
       case "buyers":
@@ -50,11 +52,11 @@ export const BroadcastTab = () => {
       case "non_buyers":
         return Math.round(users * (1 - ordersFraction));
       case "active_7d":
-        return MOCK_ANALYTICS.totals.wau;
+        return analytics.totals.wau;
       default:
         return users;
     }
-  }, [segment]);
+  }, [analytics, segment]);
 
   const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -72,35 +74,15 @@ export const BroadcastTab = () => {
       toast.error("У кнопки должна быть ссылка");
       return;
     }
-    const endpoint = import.meta.env.VITE_BROADCAST_URL as string | undefined;
-    if (!endpoint) {
-      toast.error("VITE_BROADCAST_URL не задан — укажи URL твоего бота на VPS");
-      return;
-    }
     haptic("medium");
     setSending(true);
     try {
-      const token = import.meta.env.VITE_ADMIN_API_TOKEN as string | undefined;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          segment,
-          text,
-          image, // dataURL или null
-          button: btnText.trim()
-            ? { text: btnText.trim(), url: btnUrl.trim() }
-            : null,
-        }),
-      });
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(`${res.status} ${msg || res.statusText}`);
-      }
-      const data = await res.json().catch(() => ({} as { queued?: number }));
+      const data = await Admin.broadcast({
+        segment,
+        text,
+        image,
+        button: btnText.trim() ? { text: btnText.trim(), url: btnUrl.trim() } : null,
+      }) as { queued?: number };
       haptic("success");
       toast.success(
         `Рассылка поставлена в очередь · ${(data.queued ?? recipients).toLocaleString("ru")} получателей`
