@@ -343,11 +343,33 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // ============== BROADCAST ==============
 
+  // Принимаем как https URL, так и data:image/...;base64,...
+  const imageSchema = z
+    .string()
+    .max(15_000_000)
+    .refine(
+      (v) => v.startsWith("data:image/") || /^https?:\/\//.test(v),
+      "image must be https URL or data:image/..."
+    );
+
+  // Нормализуем URL кнопки: @username → https://t.me/username, t.me/... → https://t.me/...
+  const normalizeButtonUrl = (raw: string): string | null => {
+    const v = raw.trim();
+    if (!v) return null;
+    if (/^https?:\/\//i.test(v)) return v;
+    if (/^tg:\/\//i.test(v)) return v;
+    if (v.startsWith("@")) return `https://t.me/${v.slice(1)}`;
+    if (/^t\.me\//i.test(v)) return `https://${v}`;
+    return null;
+  };
+
   const BroadcastSchema = z.object({
     segment: z.enum(["all", "active", "inactive"]).default("all"),
     text: z.string().min(1).max(4000),
-    image: z.string().url().nullish(),
-    button: z.object({ text: z.string().min(1).max(64), url: z.string().url().max(2048) }).nullish(),
+    image: imageSchema.nullish(),
+    button: z
+      .object({ text: z.string().min(1).max(64), url: z.string().min(1).max(2048) })
+      .nullish(),
   });
 
   app.post("/broadcast", { preHandler: requireAdmin }, async (req, reply) => {
@@ -355,6 +377,31 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
 
     const { segment, text, image, button } = parsed.data;
+
+    let normalizedButton: { text: string; url: string } | null = null;
+    if (button) {
+      const url = normalizeButtonUrl(button.url);
+      if (!url) return reply.code(400).send({ error: "invalid_button_url" });
+      normalizedButton = { text: button.text, url };
+    }
+
+    // Если пришёл data: URL — сохраняем картинку в uploads и шлём публичный URL
+    let imageForSend: string | undefined;
+    if (image) {
+      if (image.startsWith("data:image/")) {
+        const m = image.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (!m) return reply.code(400).send({ error: "invalid_image_data_url" });
+        const ext = m[1] === "jpeg" ? "jpg" : m[1];
+        const buf = Buffer.from(m[2], "base64");
+        await fs.mkdir(env.uploadDir, { recursive: true });
+        const name = `bcast_${Date.now()}_${crypto.randomBytes(6).toString("hex")}.${ext}`;
+        await fs.writeFile(path.join(env.uploadDir, name), buf);
+        imageForSend = `${env.publicUploadUrl.replace(/\/$/, "")}/${name}`;
+      } else {
+        imageForSend = image;
+      }
+    }
+
     const where =
       segment === "active" ? { orders: { some: {} } }
       : segment === "inactive" ? { orders: { none: {} } }
@@ -363,11 +410,16 @@ export async function adminRoutes(app: FastifyInstance) {
     const recipients = users.map((u) => Number(u.tgId));
 
     const log = await prisma.broadcastLog.create({
-      data: { segment, text, imageUrl: image ?? undefined, button: button ?? undefined },
+      data: { segment, text, imageUrl: imageForSend, button: normalizedButton ?? undefined },
     });
 
     (async () => {
-      const result = await broadcast({ recipients, text, imageUrl: image ?? undefined, button: button ?? undefined });
+      const result = await broadcast({
+        recipients,
+        text,
+        imageUrl: imageForSend,
+        button: normalizedButton,
+      });
       await prisma.broadcastLog.update({
         where: { id: log.id },
         data: { sentCount: result.sent, failedCount: result.failed },

@@ -139,32 +139,25 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
   // ── Поддержка ────────────────────────────────────────────────
   const openSupport = () => {
     haptic("light");
-    const url = `https://t.me/${SUPPORT_USERNAME}`;
     const tgAny = tg as any;
-    const version = parseFloat(tgAny?.version ?? "6.0");
+    const tgDeepLink = `tg://resolve?domain=${SUPPORT_USERNAME}`;
+    const httpsLink = `https://t.me/${SUPPORT_USERNAME}`;
 
-    // openTelegramLink надёжно работает с версии 6.1+
-    if (tgAny?.openTelegramLink && version >= 6.1) {
+    // Внутри Telegram Mini App — только openTelegramLink (не сворачивает приложение)
+    if (tgAny?.openTelegramLink) {
       try {
-        tgAny.openTelegramLink(url);
+        tgAny.openTelegramLink(httpsLink);
         return;
       } catch {}
     }
-    // openLink работает в более старых версиях WebApp
     if (tgAny?.openLink) {
       try {
-        tgAny.openLink(url, { try_instant_view: false });
+        tgAny.openLink(httpsLink);
         return;
       } catch {}
     }
-    // Fallback для браузера / iframe-превью
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // Браузер / iframe — обычная ссылка
+    window.open(httpsLink, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -217,12 +210,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                 </span>
               </div>
               <div className="font-display font-bold text-xl">{formatTHB(awaitingOrder.totalUSD)}</div>
-              <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 text-amber-600 px-3 py-2">
-                <Clock className="w-4 h-4" />
-                <div className="text-[11px] font-bold">
-                  {tr("Заявка отправлена — ждите ответа администратора", "Submitted — waiting for admin response")}
-                </div>
-              </div>
             </div>
           ) : confirmedOrder ? (
             <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-3">
