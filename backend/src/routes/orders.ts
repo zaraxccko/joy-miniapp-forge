@@ -4,28 +4,21 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../auth/middleware.js";
 import { notifyAdmins } from "../bot.js";
 
-const CartLineSchema = z.preprocess((raw) => {
-  if (!raw || typeof raw !== "object") return raw;
-  const item = raw as Record<string, any>;
-  const product = item.product && typeof item.product === "object" ? item.product : null;
-  return {
-    productId: item.productId ?? product?.id,
-    productName: item.productName ?? product?.name,
-    qty: item.qty,
-    variantId: item.variantId,
-    districtSlug: item.districtSlug,
-    stashType: item.stashType,
-    priceUSD: item.priceUSD,
-  };
-}, z.object({
-  productId: z.string().min(1),
+const CartLineSchema = z.object({
+  productId: z.string().optional(),
+  product: z.any().optional(),
   productName: z.any().optional(),
   qty: z.number().int().positive().max(99),
   variantId: z.string().optional(),
   districtSlug: z.string().optional(),
   stashType: z.enum(["prikop", "klad", "magnit"]).optional(),
   priceUSD: z.number().nonnegative().optional(),
-}));
+}).superRefine((item, ctx) => {
+  const productId = item.productId ?? item.product?.id;
+  if (!productId || typeof productId !== "string") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "product_id_required", path: ["productId"] });
+  }
+});
 
 const CreateOrderSchema = z.object({
   totalUSD: z.number().nonnegative().max(1000000),
@@ -47,6 +40,12 @@ export async function orderRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "delivery_address_required" });
     }
 
+    const snapshotItems = data.items.map((item) => ({
+      ...item,
+      productId: item.productId ?? item.product?.id,
+      productName: item.productName ?? item.product?.name,
+    }));
+
     const order = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { tgId: req.user!.tgId } });
       if (!user) throw new Error("user_not_found");
@@ -61,7 +60,7 @@ export async function orderRoutes(app: FastifyInstance) {
         data: {
           userTgId: user.tgId,
           totalUSD: data.totalUSD,
-          items: data.items as any,
+          items: snapshotItems as any,
           delivery: data.delivery,
           deliveryAddress: data.deliveryAddress,
           crypto: data.crypto,
