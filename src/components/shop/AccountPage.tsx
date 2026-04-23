@@ -141,13 +141,23 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     haptic("light");
     const url = `https://t.me/${SUPPORT_USERNAME}`;
     const tgAny = tg as any;
-    try {
-      if (tgAny?.openTelegramLink) {
+    const version = parseFloat(tgAny?.version ?? "6.0");
+
+    // openTelegramLink надёжно работает с версии 6.1+
+    if (tgAny?.openTelegramLink && version >= 6.1) {
+      try {
         tgAny.openTelegramLink(url);
         return;
-      }
-    } catch {}
-    // Fallback: работает и в iframe-превью, и в обычном браузере
+      } catch {}
+    }
+    // openLink работает в более старых версиях WebApp
+    if (tgAny?.openLink) {
+      try {
+        tgAny.openLink(url, { try_instant_view: false });
+        return;
+      } catch {}
+    }
+    // Fallback для браузера / iframe-превью
     const a = document.createElement("a");
     a.href = url;
     a.target = "_blank";
