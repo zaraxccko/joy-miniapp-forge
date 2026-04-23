@@ -17,13 +17,12 @@ import { haptic } from "@/lib/telegram";
 import { useAdminPanel } from "@/store/adminPanel";
 import { Admin } from "@/lib/api";
 
-type Segment = "all" | "buyers" | "non_buyers" | "active_7d";
+type Segment = "all" | "active" | "inactive";
 
 const SEGMENT_LABELS: Record<Segment, string> = {
   all: "Все юзеры",
-  buyers: "Только покупавшие",
-  non_buyers: "Без заказов",
-  active_7d: "Активные за 7 дней",
+  active: "Только с заказами",
+  inactive: "Без заказов",
 };
 
 const fileToDataUrl = (file: File) =>
@@ -47,12 +46,10 @@ export const BroadcastTab = () => {
     const users = analytics.totals.users;
     const ordersFraction = 0.49;
     switch (segment) {
-      case "buyers":
+      case "active":
         return Math.round(users * ordersFraction);
-      case "non_buyers":
+      case "inactive":
         return Math.round(users * (1 - ordersFraction));
-      case "active_7d":
-        return analytics.totals.wau;
       default:
         return users;
     }
