@@ -1,14 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Package,
   User as UserIcon,
   ShoppingBag,
   Clock,
-  RefreshCw,
-  Gift,
-  Copy,
-  Share2,
   MessageCircle,
   Repeat,
 } from "lucide-react";
@@ -37,7 +33,6 @@ const statusMeta = {
 
 type HistoryFilter = "all" | "confirmed" | "cancelled";
 
-const BOT_USERNAME = (import.meta.env.VITE_BOT_USERNAME as string | undefined)?.replace(/^@/, "") || "";
 const SUPPORT_USERNAME = (import.meta.env.VITE_SUPPORT_USERNAME as string | undefined)?.replace(/^@/, "") || "";
 
 export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
@@ -68,33 +63,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
       window.removeEventListener("focus", tick);
     };
   }, [hydrate]);
-
-  // ── Pull-to-refresh ───────────────────────────────────────────
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const startY = useRef<number | null>(null);
-  const [pullDist, setPullDist] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    if ((scrollRef.current?.scrollTop ?? 0) > 0) return;
-    startY.current = e.touches[0].clientY;
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (startY.current === null) return;
-    const dy = e.touches[0].clientY - startY.current;
-    if (dy > 0) setPullDist(Math.min(dy * 0.5, 80));
-  };
-  const onTouchEnd = async () => {
-    if (startY.current === null) return;
-    const dist = pullDist;
-    startY.current = null;
-    setPullDist(0);
-    if (dist > 60 && !refreshing) {
-      setRefreshing(true);
-      haptic("light");
-      try { await hydrate(); } finally { setTimeout(() => setRefreshing(false), 400); }
-    }
-  };
 
   // ── Активный/подтверждённый заказ ─────────────────────────────
   const activeOrder =
@@ -168,32 +136,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     onOpenCart();
   };
 
-  // ── Реферальная ссылка ────────────────────────────────────────
-  const refLink = useMemo(() => {
-    if (!user?.id || !BOT_USERNAME) return "";
-    return `https://t.me/${BOT_USERNAME}?start=ref_${user.id}`;
-  }, [user?.id]);
-
-  const copyRef = async () => {
-    if (!refLink) return;
-    try {
-      await navigator.clipboard.writeText(refLink);
-      toast.success(tr("Ссылка скопирована", "Link copied"));
-      haptic("light");
-    } catch {
-      toast.error(tr("Не удалось скопировать", "Copy failed"));
-    }
-  };
-
-  const shareRef = () => {
-    if (!refLink) return;
-    const text = tr("Залетай в наш магазин 👇", "Check out our shop 👇");
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
-    const tgAny = tg as any;
-    if (tgAny?.openTelegramLink) tgAny.openTelegramLink(shareUrl);
-    else window.open(shareUrl, "_blank", "noopener,noreferrer");
-  };
-
   // ── Поддержка ────────────────────────────────────────────────
   const openSupport = () => {
     if (!SUPPORT_USERNAME) {
@@ -207,42 +149,24 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
   };
 
   return (
-    <div
-      ref={scrollRef}
-      className="min-h-screen max-w-md mx-auto bg-background overflow-y-auto"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {/* Pull-to-refresh индикатор */}
-      <div
-        className="flex items-center justify-center transition-all overflow-hidden text-muted-foreground"
-        style={{ height: refreshing ? 40 : pullDist }}
-      >
-        <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-      </div>
-
-      {/* ── Градиентная шапка ───────────────────────────────── */}
-      <header className="relative px-5 pt-5 pb-20 gradient-primary text-primary-foreground">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { haptic("light"); onBack(); }}
-            className="w-10 h-10 rounded-2xl bg-background/20 backdrop-blur-md flex items-center justify-center active:scale-95"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="font-display font-bold text-lg">{tr("Личный кабинет", "Account")}</div>
-        </div>
+    <div className="min-h-screen max-w-md mx-auto bg-background">
+      <header className="sticky top-0 z-30 px-5 pt-5 pb-3 bg-background/80 backdrop-blur-xl flex items-center gap-3">
+        <button
+          onClick={() => { haptic("light"); onBack(); }}
+          className="w-10 h-10 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="font-display font-bold text-lg">{tr("Личный кабинет", "Account")}</div>
       </header>
 
-      <main className="px-5 pb-32 -mt-16 space-y-5">
-        {/* ── Карточка профиля поверх градиента ─────────────── */}
+      <main className="px-5 pb-32 space-y-5">
         <section className="rounded-2xl bg-card shadow-card p-4 flex items-center gap-3">
           {user?.photo_url ? (
-            <img src={user.photo_url} alt={displayName} className="w-14 h-14 rounded-2xl object-cover" />
+            <img src={user.photo_url} alt={displayName} className="w-12 h-12 rounded-2xl object-cover" />
           ) : (
-            <div className="w-14 h-14 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+            <div className="w-12 h-12 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center font-bold">
               {user?.first_name || user?.username ? initials : <UserIcon className="w-6 h-6" />}
             </div>
           )}
@@ -254,7 +178,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
           </div>
         </section>
 
-        {/* ── Активный заказ ─────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-2">
             <div className="font-display font-bold text-lg flex items-center gap-2">
@@ -326,36 +249,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
           )}
         </section>
 
-        {/* ── Реферальная ссылка ─────────────────────────────── */}
-        {refLink && (
-          <section className="rounded-2xl bg-card shadow-card p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Gift className="w-4 h-4 text-primary" />
-              <div className="font-display font-bold">{tr("Пригласи друга", "Invite a friend")}</div>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {tr("Поделись ссылкой — друзья откроют магазин по твоей рекомендации.", "Share the link — friends will open the shop via your referral.")}
-            </div>
-            <div className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-xs font-mono truncate">
-              {refLink}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={copyRef}
-                className="flex-1 h-10 rounded-xl bg-primary/10 text-primary font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
-              >
-                <Copy className="w-4 h-4" /> {tr("Скопировать", "Copy")}
-              </button>
-              <button
-                onClick={shareRef}
-                className="flex-1 h-10 rounded-xl gradient-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
-              >
-                <Share2 className="w-4 h-4" /> {tr("Поделиться", "Share")}
-              </button>
-            </div>
-          </section>
-        )}
-
         {/* ── Поддержка ──────────────────────────────────────── */}
         <section>
           <button
@@ -382,7 +275,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
             </div>
           </div>
 
-          {/* Фильтр статусов */}
           {allHistory.length > 0 && (
             <div className="flex gap-1.5 mb-3 p-1 rounded-2xl bg-muted">
               {([
