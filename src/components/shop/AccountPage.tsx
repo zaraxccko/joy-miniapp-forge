@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Wallet, Plus, Package, Receipt, User as UserIcon, ShoppingBag, Clock } from "lucide-react";
+import { ArrowLeft, Package, User as UserIcon, ShoppingBag, Clock } from "lucide-react";
 import { useAccount } from "@/store/account";
 import { useCart, RESERVATION_MS } from "@/store/cart";
 import { useI18n } from "@/lib/i18n";
@@ -9,9 +9,7 @@ import { loc } from "@/lib/loc";
 
 interface AccountPageProps {
   onBack: () => void;
-  onTopUp: () => void;
   onOpenCart: () => void;
-  /** Открыть страницу оплаты текущего активного заказа. */
   onOpenActiveOrder: () => void;
 }
 
@@ -23,19 +21,10 @@ const statusMeta = {
   cancelled:   { ru: "Отменён",     en: "Cancelled",   cls: "bg-destructive/15 text-destructive" },
 } as const;
 
-const depStatusMeta = {
-  pending:   { ru: "Не оплачен",   en: "Unpaid",    cls: "bg-muted text-muted-foreground" },
-  awaiting:  { ru: "Ожидает",      en: "Pending",   cls: "bg-amber-500/15 text-amber-600" },
-  confirmed: { ru: "Зачислено",    en: "Confirmed", cls: "bg-emerald-500/15 text-emerald-600" },
-  cancelled: { ru: "Отменено",     en: "Cancelled", cls: "bg-muted text-muted-foreground" },
-} as const;
-
-export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
+export const AccountPage = ({ onBack, onOpenActiveOrder }: AccountPageProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
   const { user } = useTelegram();
-  const balance = useAccount((s) => s.balanceUSD);
   const orders = useAccount((s) => s.orders);
-  const deposits = useAccount((s) => s.deposits);
   const hydrate = useAccount((s) => s.hydrate);
   const cartLines = useCart((s) => s.lines);
   const cartTotal = useCart((s) => s.totalTHB());
@@ -43,8 +32,6 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
   const reservedAt = useCart((s) => s.reservedAt);
   const clearCart = useCart((s) => s.clear);
 
-  // Polling: пока страница открыта — каждые 5 сек подтягиваем актуальные баланс/статусы из API.
-  // Это нужно, чтобы юзер сразу видел, когда админ подтвердил/отклонил пополнение или заказ.
   useEffect(() => {
     hydrate();
     const tick = () => { if (!document.hidden) hydrate(); };
@@ -58,18 +45,12 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
     };
   }, [hydrate]);
 
-  /**
-   * Активная карточка: либо заказ в ожидании, либо только что подтверждённый
-   * (показываем данные от админа, пока юзер не закроет/не сделает новый заказ).
-   * Отменённые заказы сюда не попадают — они уходят сразу в историю.
-   */
   const activeOrder =
     orders.find((o) => o.status === "awaiting") ??
     orders.find((o) => (o.status === "completed" || o.status === "paid" || o.status === "in_delivery") && (o.confirmPhoto || o.confirmText)) ??
     null;
   const awaitingOrder = activeOrder?.status === "awaiting" ? activeOrder : null;
   const confirmedOrder = activeOrder && activeOrder.status !== "awaiting" ? activeOrder : null;
-  // Скрываем подтверждённый заказ из истории, чтобы не дублировать его в списке.
   const historyOrders = orders.filter((o) => o.id !== confirmedOrder?.id);
 
   const [now, setNow] = useState(() => Date.now());
@@ -81,9 +62,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
 
   const msLeft = reservedAt ? Math.max(0, reservedAt + RESERVATION_MS - now) : 0;
   useEffect(() => {
-    if (reservedAt && cartLines.length > 0 && msLeft === 0) {
-      clearCart();
-    }
+    if (reservedAt && cartLines.length > 0 && msLeft === 0) clearCart();
   }, [msLeft, reservedAt, cartLines.length, clearCart]);
 
   const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
@@ -97,9 +76,7 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
 
   const displayName = user?.first_name
     ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}`
-    : user?.username
-      ? `@${user.username}`
-      : tr("Гость", "Guest");
+    : user?.username ? `@${user.username}` : tr("Гость", "Guest");
   const initials = (user?.first_name?.[0] ?? user?.username?.[0] ?? "G").toUpperCase();
 
   return (
@@ -116,14 +93,9 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
       </header>
 
       <main className="px-5 pb-32 space-y-5">
-        {/* Profile */}
         <section className="rounded-2xl bg-card shadow-card p-4 flex items-center gap-3">
           {user?.photo_url ? (
-            <img
-              src={user.photo_url}
-              alt={displayName}
-              className="w-12 h-12 rounded-2xl object-cover"
-            />
+            <img src={user.photo_url} alt={displayName} className="w-12 h-12 rounded-2xl object-cover" />
           ) : (
             <div className="w-12 h-12 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center font-bold">
               {user?.first_name || user?.username ? initials : <UserIcon className="w-6 h-6" />}
@@ -137,22 +109,6 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
           </div>
         </section>
 
-        {/* Balance */}
-        <section className="rounded-2xl gradient-primary text-primary-foreground p-5 shadow-glow">
-          <div className="flex items-center gap-2 text-xs opacity-80">
-            <Wallet className="w-4 h-4" />
-            {tr("Баланс", "Balance")}
-          </div>
-          <div className="font-display font-bold text-3xl mt-1">{formatTHB(balance)}</div>
-          <button
-            onClick={() => { haptic("medium"); onTopUp(); }}
-            className="mt-3 w-full bg-primary-foreground/15 hover:bg-primary-foreground/25 transition-colors rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> {tr("Пополнить", "Top up")}
-          </button>
-        </section>
-
-        {/* Active cart */}
         <section>
           <div className="flex items-center justify-between mb-2">
             <div className="font-display font-bold text-lg flex items-center gap-2">
@@ -165,14 +121,9 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
             )}
           </div>
           {awaitingOrder ? (
-            <div
-              className="w-full rounded-2xl bg-card shadow-card p-4 space-y-2 opacity-90 cursor-default select-none"
-              aria-disabled="true"
-            >
+            <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-2 opacity-90">
               <div className="flex items-center justify-between">
-                <div className="text-[11px] font-mono font-bold text-muted-foreground">
-                  #{awaitingOrder.id}
-                </div>
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">#{awaitingOrder.id}</div>
                 <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-amber-500/15 text-amber-600">
                   {tr("Ждём подтверждения", "Waiting for confirmation")}
                 </span>
@@ -181,19 +132,14 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
               <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 text-amber-600 px-3 py-2">
                 <Clock className="w-4 h-4" />
                 <div className="text-[11px] font-bold">
-                  {tr(
-                    "Заявка отправлена — ждите ответа администратора",
-                    "Submitted — waiting for admin response"
-                  )}
+                  {tr("Заявка отправлена — ждите ответа администратора", "Submitted — waiting for admin response")}
                 </div>
               </div>
             </div>
           ) : confirmedOrder ? (
             <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="text-[11px] font-mono font-bold text-muted-foreground">
-                  #{confirmedOrder.id}
-                </div>
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">#{confirmedOrder.id}</div>
                 <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-emerald-500/15 text-emerald-600">
                   {tr("Оплата подтверждена", "Payment confirmed")}
                 </span>
@@ -205,17 +151,11 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
                 </div>
                 {confirmedOrder.confirmPhoto && (
                   <a href={confirmedOrder.confirmPhoto} target="_blank" rel="noreferrer" className="block">
-                    <img
-                      src={confirmedOrder.confirmPhoto}
-                      alt="confirm"
-                      className="w-full max-h-72 object-cover rounded-lg"
-                    />
+                    <img src={confirmedOrder.confirmPhoto} alt="confirm" className="w-full max-h-72 object-cover rounded-lg" />
                   </a>
                 )}
                 {confirmedOrder.confirmText && (
-                  <div className="text-sm text-foreground/90 whitespace-pre-wrap">
-                    {confirmedOrder.confirmText}
-                  </div>
+                  <div className="text-sm text-foreground/90 whitespace-pre-wrap">{confirmedOrder.confirmText}</div>
                 )}
               </div>
             </div>
@@ -224,61 +164,22 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
               {tr("Корзина пуста", "Cart is empty")}
             </div>
           ) : (
-            <button
-              onClick={onOpenActiveOrder}
-              className="w-full rounded-2xl bg-card shadow-card p-4 text-left active:scale-[0.99] space-y-2"
-            >
+            <button onClick={onOpenActiveOrder} className="w-full rounded-2xl bg-card shadow-card p-4 text-left active:scale-[0.99] space-y-2">
               <div className="flex items-center justify-between">
-                <div className="text-[11px] font-mono font-bold text-muted-foreground">
-                  #{cartId}
-                </div>
-                <div className="text-[11px] text-muted-foreground">
-                  {cartLines.length} {tr("позиций", "items")}
-                </div>
+                <div className="text-[11px] font-mono font-bold text-muted-foreground">#{cartId}</div>
+                <div className="text-[11px] text-muted-foreground">{cartLines.length} {tr("позиций", "items")}</div>
               </div>
               <div className="font-display font-bold text-xl">{formatTHB(cartTotal)}</div>
               {reservedAt > 0 && (
                 <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 text-amber-600 px-3 py-2">
                   <Clock className="w-4 h-4" />
-                  <div className="text-[11px] font-bold">
-                    {tr("Зарезервировано", "Reserved")} · {mm}:{ss}
-                  </div>
+                  <div className="text-[11px] font-bold">{tr("Зарезервировано", "Reserved")} · {mm}:{ss}</div>
                 </div>
               )}
             </button>
           )}
         </section>
 
-        {/* Deposits */}
-        <section>
-          <div className="font-display font-bold text-lg mb-2 flex items-center gap-2">
-            <Receipt className="w-4 h-4" /> {tr("Пополнения", "Top-ups")}
-          </div>
-          {deposits.length === 0 ? (
-            <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
-              {tr("Пока нет пополнений", "No top-ups yet")}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {deposits.slice(0, 5).map((d) => {
-                const m = depStatusMeta[d.status];
-                return (
-                  <div key={d.id} className="rounded-2xl bg-card shadow-card p-3 flex items-center justify-between">
-                    <div className="min-w-0">
-                      <div className="font-bold">{formatTHB(d.amountUSD)} <span className="text-xs text-muted-foreground font-normal">· {d.crypto}</span></div>
-                      <div className="text-[11px] text-muted-foreground">{fmtDate(d.createdAt)}</div>
-                    </div>
-                    <span className={`text-[11px] font-bold rounded-full px-2.5 py-1 ${m.cls}`}>
-                      {m[lang]}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Orders */}
         <section>
           <div className="font-display font-bold text-lg mb-2 flex items-center gap-2">
             <Package className="w-4 h-4" /> {tr("История заказов", "Order history")}
@@ -289,15 +190,13 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
             </div>
           ) : (
             <div className="space-y-2">
-              {historyOrders.slice(0, 5).map((o) => {
+              {historyOrders.slice(0, 10).map((o) => {
                 const m = statusMeta[o.status];
                 return (
                   <div key={o.id} className="rounded-2xl bg-card shadow-card p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-[11px] font-mono font-bold text-muted-foreground">#{o.id}</div>
-                      <span className={`text-[11px] font-bold rounded-full px-2.5 py-1 ${m.cls}`}>
-                        {m[lang]}
-                      </span>
+                      <span className={`text-[11px] font-bold rounded-full px-2.5 py-1 ${m.cls}`}>{m[lang]}</span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <div className="font-bold">{formatTHB(o.totalUSD)}</div>
@@ -318,17 +217,11 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
                         </div>
                         {o.confirmPhoto && (
                           <a href={o.confirmPhoto} target="_blank" rel="noreferrer" className="block">
-                            <img
-                              src={o.confirmPhoto}
-                              alt="confirm"
-                              className="w-full max-h-64 object-cover rounded-lg"
-                            />
+                            <img src={o.confirmPhoto} alt="confirm" className="w-full max-h-64 object-cover rounded-lg" />
                           </a>
                         )}
                         {o.confirmText && (
-                          <div className="text-xs text-foreground/90 whitespace-pre-wrap">
-                            {o.confirmText}
-                          </div>
+                          <div className="text-xs text-foreground/90 whitespace-pre-wrap">{o.confirmText}</div>
                         )}
                       </div>
                     )}
