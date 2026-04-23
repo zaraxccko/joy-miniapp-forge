@@ -36,7 +36,11 @@ const CreateOrderSchema = z.object({
 });
 
 export async function orderRoutes(app: FastifyInstance) {
-  /** POST /api/orders — оформить заказ и отправить его в админку на подтверждение. */
+  /**
+   * POST /api/orders — оформить заказ.
+   * Атомарно: списываем баланс юзера и создаём заказ в статусе "awaiting".
+   * Защита от дублей: если последний заказ юзера создан < 5 сек назад с тем же total — возвращаем его.
+   */
   app.post("/orders", { preHandler: requireAuth }, async (req, reply) => {
     const parsed = CreateOrderSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -56,64 +60,80 @@ export async function orderRoutes(app: FastifyInstance) {
       priceUSD: item.priceUSD ?? 0,
     }));
 
-    const user = await prisma.user.findUnique({ where: { tgId: req.user!.tgId } });
-    if (!user) {
-      return reply.code(401).send({ error: "unauthorized" });
-    }
-
-    const existingAwaitingOrder = await prisma.order.findFirst({
+    // Защита от двойного клика: ищем недавний awaiting-заказ по userTgId+totalUSD за последние 5 сек.
+    // НЕ используем JSON-equality по items — оно может выкидывать ошибки и тормозить.
+    const recentSame = await prisma.order.findFirst({
       where: {
-        userTgId: user.tgId,
+        userTgId: req.user!.tgId,
         status: "awaiting",
-        items: snapshotItems as any,
         totalUSD: data.totalUSD,
         delivery: data.delivery,
-        deliveryAddress: data.deliveryAddress ?? undefined,
+        createdAt: { gte: new Date(Date.now() - 5_000) },
       },
       orderBy: { createdAt: "desc" },
     });
-
-    if (existingAwaitingOrder) {
-      return reply.code(409).send({ error: "order_already_submitted", order: serialize(existingAwaitingOrder) });
+    if (recentSame) {
+      return reply.code(200).send(serialize(recentSame));
     }
-
-    const order = await prisma.order.create({
-      data: {
-        userTgId: user.tgId,
-        totalUSD: data.totalUSD,
-        items: snapshotItems as any,
-        delivery: data.delivery,
-        deliveryAddress: data.deliveryAddress ?? undefined,
-        crypto: data.crypto ?? undefined,
-        payAddress: data.payAddress ?? undefined,
-        status: "awaiting",
-      },
-    }).catch((e: Error) => {
-      req.log.error({ err: e }, "failed to create order");
-      reply.code(500).send({ error: "internal" });
-      return null;
-    });
-
-    if (!order) return;
 
     try {
-      const who = user?.username ? `@${user.username}` : user?.firstName ?? `tg:${order.userTgId}`;
-      const itemsCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
-      const text =
-        `🛒 <b>Новая заявка на заказ</b> #${order.id}\n` +
-        `👤 ${who}\n` +
-        `💰 $${order.totalUSD.toFixed(2)}\n` +
-        `📦 позиций: ${itemsCount}` +
-        (order.delivery ? `\n🚚 доставка: ${order.deliveryAddress ?? "—"}` : "");
-      // не блокируем ответ пользователю
-      notifyAdmins(text).catch((err) =>
-        req.log.error({ err }, "notifyAdmins failed for new order")
-      );
-    } catch (err) {
-      req.log.error({ err }, "failed to build admin notification");
-    }
+      // Атомарно: проверяем баланс, списываем, создаём заказ.
+      const order = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.findUnique({ where: { tgId: req.user!.tgId } });
+        if (!user) throw new Error("user_not_found");
+        if (user.balanceUSD + 1e-6 < data.totalUSD) {
+          const err: any = new Error("insufficient_balance");
+          err.code = "insufficient_balance";
+          err.balanceUSD = user.balanceUSD;
+          throw err;
+        }
+        await tx.user.update({
+          where: { tgId: user.tgId },
+          data: { balanceUSD: { decrement: data.totalUSD } },
+        });
+        return tx.order.create({
+          data: {
+            userTgId: user.tgId,
+            totalUSD: data.totalUSD,
+            items: snapshotItems as any,
+            delivery: data.delivery,
+            deliveryAddress: data.deliveryAddress ?? undefined,
+            crypto: data.crypto ?? undefined,
+            payAddress: data.payAddress ?? undefined,
+            status: "awaiting",
+          },
+        });
+      });
 
-    return serialize(order);
+      // Уведомление админам — не блокирует ответ.
+      try {
+        const user = await prisma.user.findUnique({ where: { tgId: order.userTgId } });
+        const who = user?.username ? `@${user.username}` : user?.firstName ?? `tg:${order.userTgId}`;
+        const itemsCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
+        const text =
+          `🛒 <b>Новая заявка на заказ</b> #${order.id}\n` +
+          `👤 ${who}\n` +
+          `💰 $${order.totalUSD.toFixed(2)}\n` +
+          `📦 позиций: ${itemsCount}` +
+          (order.delivery ? `\n🚚 доставка: ${order.deliveryAddress ?? "—"}` : "");
+        notifyAdmins(text).catch((err) =>
+          req.log.error({ err }, "notifyAdmins failed for new order")
+        );
+      } catch (err) {
+        req.log.error({ err }, "failed to build admin notification");
+      }
+
+      return serialize(order);
+    } catch (e: any) {
+      if (e?.code === "insufficient_balance") {
+        return reply.code(402).send({ error: "insufficient_balance", balanceUSD: e.balanceUSD });
+      }
+      if (e?.message === "user_not_found") {
+        return reply.code(401).send({ error: "unauthorized" });
+      }
+      req.log.error({ err: e, body: req.body }, "failed to create order");
+      return reply.code(500).send({ error: "internal", message: String(e?.message ?? e) });
+    }
   });
 
   /** GET /api/orders/me — мои заказы */
