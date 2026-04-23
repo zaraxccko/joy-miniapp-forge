@@ -36,11 +36,27 @@ export const AccountPage = ({ onBack, onTopUp, onOpenCart, onOpenActiveOrder }: 
   const balance = useAccount((s) => s.balanceUSD);
   const orders = useAccount((s) => s.orders);
   const deposits = useAccount((s) => s.deposits);
+  const hydrate = useAccount((s) => s.hydrate);
   const cartLines = useCart((s) => s.lines);
   const cartTotal = useCart((s) => s.totalTHB());
   const cartId = useCart((s) => s.cartId);
   const reservedAt = useCart((s) => s.reservedAt);
   const clearCart = useCart((s) => s.clear);
+
+  // Polling: пока страница открыта — каждые 5 сек подтягиваем актуальные баланс/статусы из API.
+  // Это нужно, чтобы юзер сразу видел, когда админ подтвердил/отклонил пополнение или заказ.
+  useEffect(() => {
+    hydrate();
+    const tick = () => { if (!document.hidden) hydrate(); };
+    const interval = setInterval(tick, 5000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
+      window.removeEventListener("focus", tick);
+    };
+  }, [hydrate]);
 
   /**
    * Активная карточка: либо заказ в ожидании, либо только что подтверждённый
