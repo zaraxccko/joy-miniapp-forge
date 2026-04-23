@@ -13,7 +13,6 @@ import { env } from "./env.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { catalogRoutes } from "./routes/catalog.js";
-import { depositRoutes } from "./routes/deposits.js";
 import { orderRoutes } from "./routes/orders.js";
 import { adminRoutes } from "./routes/admin.js";
 import "./bot.js"; // запускает long-polling
@@ -50,7 +49,6 @@ async function main() {
       await authRoutes(api);
       await meRoutes(api);
       await catalogRoutes(api);
-      await depositRoutes(api);
       await orderRoutes(api);
       await adminRoutes(api);
     },
