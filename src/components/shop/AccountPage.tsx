@@ -144,8 +144,14 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     const tgDeepLink = `tg://resolve?domain=${SUPPORT_USERNAME}`;
     const inTelegramClient = isTelegramClient(tg);
     const openBrowserLink = () => {
-      const popup = window.open(httpsLink, "_blank", "noopener,noreferrer");
-      if (!popup) window.location.href = httpsLink;
+      // Открываем в новой вкладке верхнего окна, чтобы не ломать iframe превью Lovable
+      const a = document.createElement("a");
+      a.href = httpsLink;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     };
 
     if (!inTelegramClient) {
