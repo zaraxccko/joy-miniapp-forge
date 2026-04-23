@@ -62,7 +62,7 @@ export const CryptoAmountCard = ({ amountUSD, crypto, cryptoName }: Props) => {
           className="w-full flex items-center justify-center gap-2 gradient-primary text-primary-foreground rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] shadow-glow"
         >
           <Copy className="w-4 h-4" />
-          {tr(`Скопировать сумму ${formatted} ${crypto}`, `Copy ${formatted} ${crypto}`)}
+          {tr("Скопировать сумму", "Copy amount")}
         </button>
       )}
 
