@@ -1043,16 +1043,17 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
 const DepositsTab = () => {
   const orders = useAdminPanel((s) => s.awaitingOrders);
-  const deposits = useAdminPanel((s) => s.awaitingDeposits);
   const historyOrders = useAdminPanel((s) => s.historyOrders);
-  const historyDeposits = useAdminPanel((s) => s.historyDeposits);
   const confirmOrder = useAdminPanel((s) => s.confirmOrder);
   const cancelOrder = useAdminPanel((s) => s.cancelOrder);
-  const confirmDeposit = useAdminPanel((s) => s.confirmDeposit);
-  const cancelDeposit = useAdminPanel((s) => s.cancelDeposit);
+  const messageOrder = useAdminPanel((s) => s.messageOrder);
 
   const awaitingOrders = orders;
-  const awaitingDeposits = deposits;
+  const historyDeposits: any[] = [];
+  const awaitingDeposits: any[] = [];
+  void messageOrder;
+  void awaitingDeposits;
+  void historyDeposits;
 
   const [confirmTarget, setConfirmTarget] = useState<OrderRecord | null>(null);
   const [photo, setPhoto] = useState<string>("");
