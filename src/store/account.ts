@@ -163,6 +163,23 @@ export const useAccount = create<AccountState>((set, get) => ({
   },
 
   addOrder: async (o) => {
+    // Оптимистично добавляем awaiting-заказ, чтобы UI моментально заблокировал карточку
+    // активного заказа (даже если сеть медленная). При ошибке — откатим.
+    const optimisticId = `tmp-${Date.now()}`;
+    const optimistic: OrderRecord = {
+      id: optimisticId,
+      createdAt: new Date().toISOString(),
+      totalUSD: o.totalUSD,
+      items: o.items,
+      delivery: o.delivery,
+      deliveryAddress: o.deliveryAddress,
+      status: "awaiting",
+      customerName: o.customerName,
+      customerTgId: o.customerTgId,
+      crypto: o.crypto,
+      payAddress: o.payAddress,
+    };
+    set((s) => ({ orders: [optimistic, ...s.orders] }));
     try {
       const created = (await Orders.create({
         totalUSD: o.totalUSD,
@@ -173,12 +190,14 @@ export const useAccount = create<AccountState>((set, get) => ({
         payAddress: o.payAddress,
       })) as OrderRecord;
       set((s) => {
-        const nextOrders = [created, ...s.orders.filter((order) => order.id !== created.id)];
-        return { orders: nextOrders };
+        const withoutOptimistic = s.orders.filter((order) => order.id !== optimisticId && order.id !== created.id);
+        return { orders: [created, ...withoutOptimistic] };
       });
       Auth.me().then((me) => set({ balanceUSD: me.balanceUSD })).catch(() => {});
       return created;
     } catch (e) {
+      // откатываем оптимистичную запись
+      set((s) => ({ orders: s.orders.filter((order) => order.id !== optimisticId) }));
       // Тост покажет вызывающий код (он различает insufficient_balance).
       throw e;
     }
