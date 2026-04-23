@@ -1,5 +1,11 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+
+// ── Globally make BigInt JSON-safe (Prisma returns BigInt for tg ids).
+// Without this, Fastify's default JSON serializer throws and the request
+// silently fails — orders never reach the client, admin lists 500, etc.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(BigInt.prototype as any).toJSON = function () { return this.toString(); };
 import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";

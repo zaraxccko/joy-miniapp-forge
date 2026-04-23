@@ -48,6 +48,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
   const { user } = useTelegram();
 
   const [crypto, setCrypto] = useState<CryptoCode>("USDT");
+  const [submitting, setSubmitting] = useState(false);
   const cryptoMeta = useMemo(() => CRYPTO_LIST.find((c) => c.code === crypto)!, [crypto]);
 
   // Reservation timer
@@ -70,7 +71,8 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
   const realLines = lines.filter((l) => !l.isGift);
 
   const handlePaid = async () => {
-    if (realLines.length === 0) return;
+    if (realLines.length === 0 || submitting) return;
+    setSubmitting(true);
     const customerName = user?.first_name
       ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
       : user?.username ? `@${user.username}` : undefined;
@@ -104,6 +106,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
         : tr(`Не удалось оформить заказ${code ? `: ${code}` : ""}`, `Failed to place order${code ? `: ${code}` : ""}`);
       toast.error(msg);
       console.error("[order] create failed", e);
+      setSubmitting(false);
     }
   };
 
@@ -317,10 +320,11 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
 
             <button
               onClick={handlePaid}
-              className="w-full gradient-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-glow active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full gradient-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-glow active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Check className="w-5 h-5" />
-              {tr("Я оплатил", "I have paid")}
+              {submitting ? tr("Отправляем…", "Sending…") : tr("Я оплатил", "I have paid")}
             </button>
           </>
         )}
