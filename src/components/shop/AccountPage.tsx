@@ -189,7 +189,8 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     if (!refLink) return;
     const text = tr("Залетай в наш магазин 👇", "Check out our shop 👇");
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
-    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
+    const tgAny = tg as any;
+    if (tgAny?.openTelegramLink) tgAny.openTelegramLink(shareUrl);
     else window.open(shareUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -200,7 +201,8 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
       return;
     }
     const url = `https://t.me/${SUPPORT_USERNAME}`;
-    if (tg?.openTelegramLink) tg.openTelegramLink(url);
+    const tgAny = tg as any;
+    if (tgAny?.openTelegramLink) tgAny.openTelegramLink(url);
     else window.open(url, "_blank", "noopener,noreferrer");
   };
 
