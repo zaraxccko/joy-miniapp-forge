@@ -309,6 +309,7 @@ export async function adminRoutes(app: FastifyInstance) {
     ]);
 
     const paidLikeOrders = ordersAll.filter((o) => ["paid", "in_delivery", "completed", "awaiting"].includes(o.status));
+    const confirmedOrders = ordersAll.filter((o) => o.status === "completed");
     const orderUsers = new Set(paidLikeOrders.map((o) => o.userTgId.toString()));
     const activeUserIds = new Set<string>(ordersAll.map((o) => o.userTgId.toString()));
 
@@ -323,6 +324,8 @@ export async function adminRoutes(app: FastifyInstance) {
       avgCheckUSD: paidLikeOrders.length
         ? round2(paidLikeOrders.reduce((sum, o) => sum + o.totalUSD, 0) / paidLikeOrders.length)
         : 0,
+      purchasesCount: confirmedOrders.length,
+      purchasesUSD: round2(confirmedOrders.reduce((sum, o) => sum + o.totalUSD, 0)),
     };
 
     return {

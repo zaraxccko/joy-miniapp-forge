@@ -137,6 +137,8 @@ export const AnalyticsTab = () => {
         <KPI icon={Users} label="Активных за месяц" value={a.totals.mau.toLocaleString("ru")} hint="за месяц" />
         
         <KPI icon={ShoppingBag} label="Заказов" value={a.totals.ordersToday.toString()} hint="сегодня" />
+        <KPI icon={ShoppingBag} label="Покупок" value={a.totals.purchasesCount.toLocaleString("ru")} hint="подтверждено" />
+        <KPI icon={DollarSign} label="Сумма покупок" value={`$${a.totals.purchasesUSD.toLocaleString("ru")}`} hint="подтверждено" />
       </div>
 
       {/* Sparklines */}
