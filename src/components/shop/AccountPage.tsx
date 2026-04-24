@@ -48,6 +48,19 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
   const clearCart = useCart((s) => s.clear);
   const addToCart = useCart((s) => s.add);
 
+  // Лайтбокс для просмотра фото-подтверждений внутри WebApp
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") setLightbox((l) => l ? { ...l, index: (l.index + 1) % l.images.length } : l);
+      if (e.key === "ArrowLeft") setLightbox((l) => l ? { ...l, index: (l.index - 1 + l.images.length) % l.images.length } : l);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
+
   const tr = (ru: string, en: string) => (lang === "ru" ? ru : en);
 
   // ── Авто-рефреш ───────────────────────────────────────────────
@@ -272,19 +285,18 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                             ? o.confirmPhotos
                             : (o.confirmPhoto ? [o.confirmPhoto] : []);
                           if (list.length === 0) return null;
-                          if (list.length === 1) {
-                            return (
-                              <a href={list[0]} target="_blank" rel="noreferrer" className="block">
-                                <img src={list[0]} alt="confirm" className="w-full max-h-64 object-cover rounded-lg" />
-                              </a>
-                            );
-                          }
                           return (
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <div className="flex flex-wrap gap-1.5">
                               {list.map((src, i) => (
-                                <a key={i} href={src} target="_blank" rel="noreferrer" className="block">
-                                  <img src={src} alt={`confirm-${i}`} className="w-full h-32 object-cover rounded-lg" />
-                                </a>
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => { haptic("light"); setLightbox({ images: list, index: i }); }}
+                                  className="relative w-14 h-14 rounded-lg overflow-hidden border border-primary/30 bg-muted active:scale-95 transition-transform"
+                                  aria-label={tr("Открыть фото", "Open photo")}
+                                >
+                                  <img src={src} alt={`confirm-${i}`} className="w-full h-full object-cover" />
+                                </button>
                               ))}
                             </div>
                           );
