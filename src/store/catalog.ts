@@ -100,10 +100,27 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
       else await Admin.createProduct(payload);
       await get().hydrate();
     } catch (e: any) {
-      const reason = e?.body && typeof e.body === "object" && "error" in e.body
-        ? String((e.body as { error?: unknown }).error)
-        : null;
+      const err = e?.body && typeof e.body === "object" ? (e.body as { error?: unknown }).error : null;
+      let reason: string | null = null;
+      if (err) {
+        if (typeof err === "string") {
+          reason = err;
+        } else if (typeof err === "object") {
+          // zod flatten(): { fieldErrors: { field: [msg] }, formErrors: [msg] }
+          const fe = (err as any).fieldErrors as Record<string, string[]> | undefined;
+          const form = (err as any).formErrors as string[] | undefined;
+          const parts: string[] = [];
+          if (fe) {
+            for (const [k, v] of Object.entries(fe)) {
+              if (Array.isArray(v) && v.length) parts.push(`${k}: ${v.join(", ")}`);
+            }
+          }
+          if (form?.length) parts.push(form.join(", "));
+          reason = parts.length ? parts.join("; ") : JSON.stringify(err);
+        }
+      }
       toast.error(reason ? `Не удалось сохранить товар: ${reason}` : "Не удалось сохранить товар");
+      console.error("[catalog] save failed", e?.body ?? e);
       throw e;
     }
   },

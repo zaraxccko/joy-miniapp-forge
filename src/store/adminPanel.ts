@@ -15,7 +15,7 @@ interface AdminPanelState {
   refreshQueue: () => Promise<void>;
   refreshAnalytics: () => Promise<void>;
   refreshAll: () => Promise<void>;
-  confirmOrder: (id: string, payload: { photo?: string; text?: string }) => Promise<void>;
+  confirmOrder: (id: string, payload: { photos?: string[]; text?: string }) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
   patchOrder: (id: string, payload: { totalUSD?: number; items?: any[]; deliveryAddress?: string }) => Promise<void>;
   messageOrder: (id: string, text: string) => Promise<void>;
@@ -65,8 +65,12 @@ export const useAdminPanel = create<AdminPanelState>((set, get) => ({
 
   confirmOrder: async (id, payload) => {
     try {
+      const files: File[] = [];
+      for (const [i, p] of (payload.photos ?? []).entries()) {
+        if (p?.startsWith("data:")) files.push(await dataUrlToFile(p, `confirm_${i}.jpg`));
+      }
       await Admin.confirmOrder(id, {
-        photo: payload.photo?.startsWith("data:") ? await dataUrlToFile(payload.photo, "confirm.jpg") : undefined,
+        photos: files.length ? files : undefined,
         text: payload.text,
       });
       await get().refreshAll();

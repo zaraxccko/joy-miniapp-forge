@@ -127,12 +127,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
           </h1>
           <span className="w-10" />
         </header>
-        <Tabs defaultValue="deposits">
-          <TabsList className="sr-only">
-            <TabsTrigger value="deposits">deposits</TabsTrigger>
-          </TabsList>
-          <DepositsTab />
-        </Tabs>
+        <DepositsTab standalone />
       </div>
     );
   }
@@ -1050,7 +1045,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
   );
 };
 
-const DepositsTab = () => {
+const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
   const orders = useAdminPanel((s) => s.awaitingOrders);
   const historyOrders = useAdminPanel((s) => s.historyOrders);
   const confirmOrder = useAdminPanel((s) => s.confirmOrder);
@@ -1061,25 +1056,31 @@ const DepositsTab = () => {
   void messageOrder;
 
   const [confirmTarget, setConfirmTarget] = useState<OrderRecord | null>(null);
-  const [photo, setPhoto] = useState<string>("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [text, setText] = useState<string>("");
 
-  const onPhoto = async (file: File | undefined) => {
-    if (!file) return;
-    const data = await new Promise<string>((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result as string);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
-    setPhoto(data);
+  const onPhoto = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const arr = Array.from(files);
+    const datas = await Promise.all(
+      arr.map(
+        (file) =>
+          new Promise<string>((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result as string);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+          })
+      )
+    );
+    setPhotos((prev) => [...prev, ...datas].slice(0, 10));
   };
 
   const submitConfirm = () => {
     if (!confirmTarget) return;
-    confirmOrder(confirmTarget.id, { photo: photo || undefined, text: text || undefined });
+    confirmOrder(confirmTarget.id, { photos: photos.length ? photos : undefined, text: text || undefined });
     setConfirmTarget(null);
-    setPhoto("");
+    setPhotos([]);
     setText("");
   };
 
@@ -1095,9 +1096,11 @@ const DepositsTab = () => {
   /** Объединяем одинаковые позиции (товар+вариант+район+закладка+isGift) в одну строку. */
   const mergeItems = (items: OrderRecord["items"]) => {
     const map = new Map<string, (typeof items)[number]>();
-    for (const l of items) {
+    for (const l of items ?? []) {
+      if (!l) continue;
       const isGift = (l as { isGift?: boolean }).isGift === true;
-      const key = `${l.product.id}::${l.variantId ?? ""}::${l.districtSlug ?? ""}::${l.stashType ?? ""}::${isGift ? "g" : ""}`;
+      const productId = (l as any).product?.id ?? (l as any).productId ?? "";
+      const key = `${productId}::${l.variantId ?? ""}::${l.districtSlug ?? ""}::${l.stashType ?? ""}::${isGift ? "g" : ""}`;
       const existing = map.get(key);
       if (existing) {
         map.set(key, { ...existing, qty: existing.qty + l.qty });
@@ -1121,8 +1124,8 @@ const DepositsTab = () => {
     cancelled: "bg-destructive/10 text-destructive",
   };
 
-  return (
-    <TabsContent value="deposits" className="space-y-3 mt-4">
+  const content = (
+    <div className="space-y-3 mt-4">
       {/* === Заявки на оплату ЗАКАЗА (товары) === */}
       <div>
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
@@ -1135,7 +1138,8 @@ const DepositsTab = () => {
         ) : (
           <div className="space-y-3">
             {awaitingOrders.map((o) => {
-              const realItems = mergeItems(o.items.filter((l) => (l as { isGift?: boolean }).isGift !== true));
+              const safeItems = Array.isArray(o.items) ? o.items : [];
+              const realItems = mergeItems(safeItems.filter((l) => l && (l as { isGift?: boolean }).isGift !== true));
               return (
                 <div key={o.id} className="bg-card rounded-2xl p-3 shadow-card space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -1155,6 +1159,9 @@ const DepositsTab = () => {
                   {/* Состав заказа */}
                   <div className="space-y-1.5 bg-background rounded-xl p-2.5">
                     {realItems.map((l, idx) => {
+                      const product = (l as any).product ?? {};
+                      const productName = product.name ?? (l as any).productName ?? "—";
+                      const productEmoji = product.emoji ?? "📦";
                       const districtName = l.districtSlug
                         ? findDistrict(l.districtSlug)?.name.ru ?? l.districtSlug
                         : null;
@@ -1165,7 +1172,7 @@ const DepositsTab = () => {
                         <div key={idx} className="text-xs">
                           <div className="font-semibold flex items-center justify-between gap-2">
                             <span className="truncate">
-                              {l.product.emoji} {loc(l.product.name, "ru")}
+                              {productEmoji} {loc(productName, "ru")}
                               {l.variantId && (
                                 <span className="text-muted-foreground font-normal"> · {l.variantId}</span>
                               )}
@@ -1219,7 +1226,7 @@ const DepositsTab = () => {
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => { setConfirmTarget(o); setPhoto(""); setText(""); }}
+                      onClick={() => { setConfirmTarget(o); setPhotos([]); setText(""); }}
                       className="flex-1 gradient-primary text-primary-foreground font-bold py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95"
                     >
                       <Check className="w-4 h-4 shrink-0" /> <span>Подтвердить</span>
@@ -1303,26 +1310,36 @@ const DepositsTab = () => {
                 <Label className="text-xs">
                   {confirmTarget.delivery ? "Фото для клиента (опционально)" : "Фото закладки"}
                 </Label>
-                <div className="mt-1.5 rounded-xl border border-dashed border-border p-3">
-                  {photo ? (
-                    <div className="space-y-2">
-                      <img src={photo} alt="preview" className="w-full max-h-64 object-contain rounded-lg" />
-                      <button
-                        onClick={() => setPhoto("")}
-                        className="text-xs text-destructive font-bold"
-                      >
-                        Убрать фото
-                      </button>
+                <div className="mt-1.5 rounded-xl border border-dashed border-border p-3 space-y-2">
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {photos.map((p, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={p} alt={`preview-${idx}`} className="w-full h-24 object-cover rounded-lg" />
+                          <button
+                            type="button"
+                            onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-card"
+                            aria-label="remove"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-1 py-4 cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+                  )}
+                  {photos.length < 10 && (
+                    <label className="flex flex-col items-center justify-center gap-1 py-3 cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
                       <ImageIcon className="w-6 h-6" />
-                      <span className="text-xs">Загрузить фото</span>
+                      <span className="text-xs">
+                        {photos.length === 0 ? "Загрузить фото (до 10)" : `Добавить ещё (${photos.length}/10)`}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         className="hidden"
-                        onChange={(e) => onPhoto(e.target.files?.[0])}
+                        onChange={(e) => { onPhoto(e.target.files); e.target.value = ""; }}
                       />
                     </label>
                   )}
@@ -1353,8 +1370,12 @@ const DepositsTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </TabsContent>
+    </div>
   );
+
+  if (standalone) return content;
+
+  return <TabsContent value="deposits" className="space-y-3 mt-4">{content}</TabsContent>;
 };
 
 export default AdminPage;

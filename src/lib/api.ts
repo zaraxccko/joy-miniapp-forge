@@ -101,9 +101,9 @@ export const Admin = {
   awaiting: () => api<{ orders: any[]; deposits: any[] }>("/admin/awaiting"),
   history: (limit = 50, offset = 0) =>
     api<{ orders: any[]; deposits: any[] }>(`/admin/history?limit=${limit}&offset=${offset}`),
-  confirmOrder: (id: string, payload: { photo?: File; text?: string }) => {
+  confirmOrder: (id: string, payload: { photos?: File[]; text?: string }) => {
     const fd = new FormData();
-    if (payload.photo) fd.append("photo", payload.photo);
+    for (const file of payload.photos ?? []) fd.append("photo", file);
     if (payload.text) fd.append("text", payload.text);
     return api(`/admin/orders/${id}/confirm`, { method: "POST", body: fd });
   },

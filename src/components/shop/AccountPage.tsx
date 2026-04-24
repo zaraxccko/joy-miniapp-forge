@@ -6,6 +6,9 @@ import {
   ShoppingBag,
   Clock,
   Repeat,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAccount, type OrderRecord } from "@/store/account";
@@ -61,17 +64,15 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     };
   }, [hydrate]);
 
-  // ── Активный/подтверждённый заказ ─────────────────────────────
-  const activeOrder =
-    orders.find((o) => o.status === "awaiting") ??
-    orders.find((o) => (o.status === "completed" || o.status === "paid" || o.status === "in_delivery") && (o.confirmPhoto || o.confirmText)) ??
-    null;
-  const awaitingOrder = activeOrder?.status === "awaiting" ? activeOrder : null;
-  const confirmedOrder = activeOrder && activeOrder.status !== "awaiting" ? activeOrder : null;
-  const allHistory = orders.filter((o) => o.id !== confirmedOrder?.id);
+  // ── Активный заказ ─────────────────────────────────────────────
+  // Активным считаем ТОЛЬКО awaiting (ждёт подтверждения от магазина).
+  // Подтверждённые/отменённые сразу уезжают в историю — пользователь может оформить новый.
+  const awaitingOrder = orders.find((o) => o.status === "awaiting") ?? null;
+  const allHistory = orders.filter((o) => o.status !== "awaiting");
 
   // ── Фильтр истории ────────────────────────────────────────────
   const [filter, setFilter] = useState<HistoryFilter>("all");
+  const [lightbox, setLightbox] = useState<{ list: string[]; index: number } | null>(null);
   const historyOrders = useMemo(() => {
     if (filter === "all") return allHistory;
     if (filter === "confirmed")
@@ -94,6 +95,20 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
 
   const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
   const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
+
+  // ── Лайтбокс: клавиатура ──────────────────────────────────────
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") setLightbox((lb) => lb ? { ...lb, index: (lb.index + 1) % lb.list.length } : lb);
+      if (e.key === "ArrowLeft")  setLightbox((lb) => lb ? { ...lb, index: (lb.index - 1 + lb.list.length) % lb.list.length } : lb);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [lightbox]);
 
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", {
@@ -168,7 +183,7 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
             <div className="font-display font-bold text-lg flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" /> {tr("Активный заказ", "Active order")}
             </div>
-            {cartLines.length > 0 && !awaitingOrder && !confirmedOrder && (
+            {cartLines.length > 0 && !awaitingOrder && (
               <button onClick={onOpenActiveOrder} className="text-xs font-bold text-primary">
                 {tr("Открыть", "Open")}
               </button>
@@ -183,29 +198,6 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                 </span>
               </div>
               <div className="font-display font-bold text-xl">{formatTHB(awaitingOrder.totalUSD)}</div>
-            </div>
-          ) : confirmedOrder ? (
-            <div className="w-full rounded-2xl bg-card shadow-card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] font-mono font-bold text-muted-foreground">#{confirmedOrder.id}</div>
-                <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-emerald-500/15 text-emerald-600">
-                  {tr("Оплата подтверждена", "Payment confirmed")}
-                </span>
-              </div>
-              <div className="font-display font-bold text-xl">{formatTHB(confirmedOrder.totalUSD)}</div>
-              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 space-y-2">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-primary">
-                  {tr("Данные от магазина", "Details from shop")}
-                </div>
-                {confirmedOrder.confirmPhoto && (
-                  <a href={confirmedOrder.confirmPhoto} target="_blank" rel="noreferrer" className="block">
-                    <img src={confirmedOrder.confirmPhoto} alt="confirm" className="w-full max-h-72 object-cover rounded-lg" />
-                  </a>
-                )}
-                {confirmedOrder.confirmText && (
-                  <div className="text-sm text-foreground/90 whitespace-pre-wrap">{confirmedOrder.confirmText}</div>
-                )}
-              </div>
             </div>
           ) : cartLines.length === 0 ? (
             <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
@@ -285,16 +277,32 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                         🚚 {tr("Доставка", "Delivery")}{o.deliveryAddress ? ` · ${o.deliveryAddress}` : ""}
                       </div>
                     )}
-                    {(o.confirmPhoto || o.confirmText) && (
+                    {((o.confirmPhotos && o.confirmPhotos.length > 0) || o.confirmPhoto || o.confirmText) && (
                       <div className="mt-2 rounded-xl bg-primary/5 border border-primary/20 p-2.5 space-y-2">
                         <div className="text-[10px] font-bold uppercase tracking-wide text-primary">
                           {tr("Сообщение от магазина", "Message from shop")}
                         </div>
-                        {o.confirmPhoto && (
-                          <a href={o.confirmPhoto} target="_blank" rel="noreferrer" className="block">
-                            <img src={o.confirmPhoto} alt="confirm" className="w-full max-h-64 object-cover rounded-lg" />
-                          </a>
-                        )}
+                        {(() => {
+                          const list = o.confirmPhotos && o.confirmPhotos.length > 0
+                            ? o.confirmPhotos
+                            : (o.confirmPhoto ? [o.confirmPhoto] : []);
+                          if (list.length === 0) return null;
+                          return (
+                            <div className="flex flex-wrap gap-1.5">
+                              {list.map((src, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => { haptic("light"); setLightbox({ list, index: i }); }}
+                                  className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted active:scale-95 transition-transform"
+                                  aria-label={`Photo ${i + 1}`}
+                                >
+                                  <img src={src} alt={`confirm-${i}`} className="w-full h-full object-cover" />
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         {o.confirmText && (
                           <div className="text-xs text-foreground/90 whitespace-pre-wrap">{o.confirmText}</div>
                         )}
@@ -316,6 +324,59 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
         </section>
 
       </main>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {lightbox.list.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((lb) => lb ? { ...lb, index: (lb.index - 1 + lb.list.length) % lb.list.length } : lb);
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+                aria-label="Prev"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((lb) => lb ? { ...lb, index: (lb.index + 1) % lb.list.length } : lb);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold">
+                {lightbox.index + 1} / {lightbox.list.length}
+              </div>
+            </>
+          )}
+
+          <img
+            src={lightbox.list[lightbox.index]}
+            alt="Full size"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg"
+          />
+        </div>
+      )}
     </div>
   );
 };
