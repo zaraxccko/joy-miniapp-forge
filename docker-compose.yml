@@ -49,13 +49,19 @@ services:
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped
+    environment:
+      APP_DOMAINS: ${APP_DOMAINS:-}
+      VITE_API_URL: ${VITE_API_URL:-}
+      WEBAPP_URL: ${WEBAPP_URL:-}
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./scripts/start-caddy.sh:/usr/local/bin/start-caddy.sh:ro
       - caddy_data:/data
       - caddy_config:/config
+    command: ["sh", "/usr/local/bin/start-caddy.sh"]
     depends_on:
       - frontend
       - api
