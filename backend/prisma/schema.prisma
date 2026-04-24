@@ -117,6 +117,7 @@ model Order {
   crypto           String?
   payAddress       String?     @map("pay_address")
   confirmPhotoUrl  String?     @map("confirm_photo_url")
+  confirmPhotoUrls String[]    @default([]) @map("confirm_photo_urls")
   confirmText      String?     @map("confirm_text")
   confirmedAt      DateTime?   @map("confirmed_at")
   createdAt        DateTime    @default(now()) @map("created_at")
