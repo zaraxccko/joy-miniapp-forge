@@ -36,6 +36,19 @@ const statusMeta = {
 
 type HistoryFilter = "all" | "confirmed" | "cancelled";
 
+function stashLabel(t: StashType | undefined, lang: "ru" | "en"): string {
+  if (!t) return "";
+  const meta = STASH_TYPES.find((s) => s.value === t);
+  return meta ? `${meta.emoji} ${meta.label[lang]}` : "";
+}
+
+function renderLine(l: any, lang: "ru" | "en"): string {
+  const name = loc(l.product?.name, lang) || l.productName || "";
+  const variant = l.variantId ? ` · ${l.variantId}` : "";
+  const stash = l.stashType ? ` · ${stashLabel(l.stashType, lang)}` : "";
+  return `${name}${variant}${stash} × ${l.qty}`;
+}
+
 export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
   const { user } = useTelegram();
