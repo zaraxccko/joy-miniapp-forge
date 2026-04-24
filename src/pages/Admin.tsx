@@ -1306,7 +1306,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                         <span>${it.totalUSD}{it.crypto ? ` · ${it.crypto}` : ""}</span>
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
-                        {it.customerName ?? (it.customerTgId ? `TG ${it.customerTgId}` : "Гость")} · {fmt(it.createdAt)}
+                        {adminCustomerLabel(it)} · {fmt(it.createdAt)}
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClassMap[it.status] ?? "bg-muted text-muted-foreground"}`}>
@@ -1328,7 +1328,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
           {confirmTarget && (
             <div className="space-y-3">
               <div className="text-xs text-muted-foreground">
-                {confirmTarget.customerName ?? "Гость"} · ${confirmTarget.totalUSD}
+                {adminCustomerLabel(confirmTarget)} · ${confirmTarget.totalUSD}
               </div>
 
               <div>
