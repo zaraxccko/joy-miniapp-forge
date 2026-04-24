@@ -47,7 +47,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // ============== ORDER CONFIRM / CANCEL / EDIT / MESSAGE ==============
 
-  /** POST /admin/orders/:id/confirm — multipart: photo (file, optional), text (string, optional) */
+  /** POST /admin/orders/:id/confirm — multipart: photo (file, optional, repeatable), text (string, optional) */
   app.post<{ Params: { id: string } }>(
     "/admin/orders/:id/confirm",
     { preHandler: requireAdmin },
@@ -55,21 +55,21 @@ export async function adminRoutes(app: FastifyInstance) {
       const order = await prisma.order.findUnique({ where: { id: req.params.id } });
       if (!order) return reply.code(404).send({ error: "not_found" });
 
-      let photoUrl: string | undefined;
+      const photoUrls: string[] = [];
+      const photoPaths: string[] = [];
       let text: string | undefined;
-      let photoPath: string | undefined;
 
       const parts = req.parts();
       for await (const part of parts) {
-        if (part.type === "file" && part.fieldname === "photo") {
+        if (part.type === "file" && (part.fieldname === "photo" || part.fieldname === "photos" || part.fieldname.startsWith("photo"))) {
           await fs.mkdir(env.uploadDir, { recursive: true });
           const ext = path.extname(part.filename || "") || ".jpg";
           const name = `${Date.now()}_${crypto.randomBytes(6).toString("hex")}${ext}`;
           const fullPath = path.join(env.uploadDir, name);
           const buf = await part.toBuffer();
           await fs.writeFile(fullPath, buf);
-          photoUrl = `${env.publicUploadUrl.replace(/\/$/, "")}/${name}`;
-          photoPath = fullPath;
+          photoUrls.push(`${env.publicUploadUrl.replace(/\/$/, "")}/${name}`);
+          photoPaths.push(fullPath);
         } else if (part.type === "field" && part.fieldname === "text") {
           text = String(part.value).slice(0, 4000);
         }
@@ -79,7 +79,8 @@ export async function adminRoutes(app: FastifyInstance) {
         where: { id: order.id },
         data: {
           status: "completed",
-          confirmPhotoUrl: photoUrl,
+          confirmPhotoUrl: photoUrls[0],
+          confirmPhotoUrls: photoUrls,
           confirmText: text,
           confirmedAt: new Date(),
         },
@@ -87,10 +88,17 @@ export async function adminRoutes(app: FastifyInstance) {
 
       try {
         const caption = `✅ Ваш заказ #${order.id} подтверждён.${text ? "\n\n" + text : ""}`;
-        if (photoPath) {
-          // Шлём как локальный stream — публичный URL может быть недоступен из Telegram (локальная разработка).
-          const fsSync = await import("node:fs");
-          await bot.sendPhoto(Number(order.userTgId), fsSync.createReadStream(photoPath), { caption });
+        const fsSync = await import("node:fs");
+        if (photoPaths.length > 1) {
+          // Telegram media group: до 10 фото за раз, caption — на первом
+          const media = photoPaths.slice(0, 10).map((p, i) => ({
+            type: "photo" as const,
+            media: fsSync.createReadStream(p) as any,
+            caption: i === 0 ? caption : undefined,
+          }));
+          await bot.sendMediaGroup(Number(order.userTgId), media as any);
+        } else if (photoPaths.length === 1) {
+          await bot.sendPhoto(Number(order.userTgId), fsSync.createReadStream(photoPaths[0]), { caption });
         } else {
           await bot.sendMessage(Number(order.userTgId), caption);
         }
