@@ -72,6 +72,25 @@ const setLang = (
   return { ...base, [l]: val };
 };
 
+const resolveOrderItemName = (value: unknown, lang: "ru" | "en" = "ru"): string => {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+  if (typeof record[lang] === "string") return record[lang] as string;
+  if (typeof record.ru === "string") return record.ru as string;
+  if (typeof record.en === "string") return record.en as string;
+  if (record.name) return resolveOrderItemName(record.name, lang);
+
+  return "";
+};
+
+const adminCustomerLabel = (order: { customerUsername?: string; customerTgId?: number }) => {
+  if (order.customerUsername) return `@${order.customerUsername}`;
+  if (order.customerTgId) return `TG ${order.customerTgId}`;
+  return "Гость";
+};
+
 const fileToDataUrl = (file: File) =>
   new Promise<string>((res, rej) => {
     const r = new FileReader();
@@ -1166,7 +1185,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                   <div className="space-y-1.5 bg-background rounded-xl p-2.5">
                     {realItems.map((l, idx) => {
                       const product = (l as any).product ?? {};
-                      const productName = product.name ?? (l as any).productName ?? "—";
+                      const productName = resolveOrderItemName(product.name) || resolveOrderItemName((l as any).productName) || "—";
                       const productEmoji = product.emoji ?? "📦";
                       const districtName = l.districtSlug
                         ? findDistrict(l.districtSlug)?.name.ru ?? l.districtSlug
@@ -1178,7 +1197,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                         <div key={idx} className="text-xs">
                           <div className="font-semibold flex items-center justify-between gap-2">
                             <span className="truncate">
-                              {productEmoji} {loc(productName, "ru")}
+                              {productEmoji} {productName}
                               {l.variantId && (
                                 <span className="text-muted-foreground font-normal"> · {l.variantId}</span>
                               )}
@@ -1287,7 +1306,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                         <span>${it.totalUSD}{it.crypto ? ` · ${it.crypto}` : ""}</span>
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
-                        {it.customerName ?? (it.customerTgId ? `TG ${it.customerTgId}` : "Гость")} · {fmt(it.createdAt)}
+                        {adminCustomerLabel(it)} · {fmt(it.createdAt)}
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClassMap[it.status] ?? "bg-muted text-muted-foreground"}`}>
@@ -1309,7 +1328,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
           {confirmTarget && (
             <div className="space-y-3">
               <div className="text-xs text-muted-foreground">
-                {confirmTarget.customerName ?? "Гость"} · ${confirmTarget.totalUSD}
+                {adminCustomerLabel(confirmTarget)} · ${confirmTarget.totalUSD}
               </div>
 
               <div>

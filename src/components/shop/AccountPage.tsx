@@ -42,8 +42,21 @@ function stashLabel(t: StashType | undefined, lang: "ru" | "en"): string {
   return meta ? `${meta.emoji} ${meta.label[lang]}` : "";
 }
 
+function resolveLineName(value: unknown, lang: "ru" | "en"): string {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+  if (typeof record[lang] === "string") return record[lang] as string;
+  if (typeof record.ru === "string") return record.ru as string;
+  if (typeof record.en === "string") return record.en as string;
+  if (record.name) return resolveLineName(record.name, lang);
+
+  return "";
+}
+
 function renderLine(l: any, lang: "ru" | "en"): string {
-  const name = loc(l.product?.name, lang) || loc(l.productName, lang) || "";
+  const name = resolveLineName(l.product?.name, lang) || resolveLineName(l.productName, lang) || "";
   const variant = l.variantId ? ` · ${l.variantId}` : "";
   const stash = l.stashType ? ` · ${stashLabel(l.stashType, lang)}` : "";
   return `${name}${variant}${stash} × ${l.qty}`;
