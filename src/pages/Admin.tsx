@@ -363,6 +363,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
             onClick={() => {
               const p = blankProduct();
               if (activeCity) p.cities = [activeCity.slug];
+              if (!p.category && categories[0]?.slug) p.category = categories[0].slug;
               setEditingP(p);
             }}
             className="w-full gradient-primary"
