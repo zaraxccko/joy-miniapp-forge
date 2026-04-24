@@ -1185,7 +1185,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                   <div className="space-y-1.5 bg-background rounded-xl p-2.5">
                     {realItems.map((l, idx) => {
                       const product = (l as any).product ?? {};
-                      const productName = product.name ?? (l as any).productName ?? "—";
+                      const productName = resolveOrderItemName(product.name) || resolveOrderItemName((l as any).productName) || "—";
                       const productEmoji = product.emoji ?? "📦";
                       const districtName = l.districtSlug
                         ? findDistrict(l.districtSlug)?.name.ru ?? l.districtSlug
@@ -1197,7 +1197,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                         <div key={idx} className="text-xs">
                           <div className="font-semibold flex items-center justify-between gap-2">
                             <span className="truncate">
-                              {productEmoji} {loc(productName, "ru")}
+                              {productEmoji} {productName}
                               {l.variantId && (
                                 <span className="text-muted-foreground font-normal"> · {l.variantId}</span>
                               )}
