@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AnalyticsTab } from "@/components/shop/admin/AnalyticsTab";
 import { BroadcastTab } from "@/components/shop/admin/BroadcastTab";
 import { ImageCropper } from "@/components/shop/admin/ImageCropper";
+import { toast } from "sonner";
 
 const GRADIENTS = ["gradient-mango", "gradient-mint", "gradient-grape", "gradient-primary", "gradient-hero"];
 
