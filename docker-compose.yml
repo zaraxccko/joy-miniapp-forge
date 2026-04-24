@@ -53,6 +53,7 @@ services:
       APP_DOMAINS: ${APP_DOMAINS:-}
       VITE_API_URL: ${VITE_API_URL:-}
       WEBAPP_URL: ${WEBAPP_URL:-}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@localhost}
     ports:
       - "80:80"
       - "443:443"
