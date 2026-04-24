@@ -159,16 +159,22 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
           gradient: c.gradient,
         });
       }
-      // Оптимистично + перезагрузка для синхронизации порядка/полей с бэка.
       set((s) => ({
         categories: exists
           ? s.categories.map((x) => (x.slug === c.slug ? c : x))
           : [...s.categories, c],
       }));
       await get().hydrate();
-    } catch (e) {
-      toast.error("Не удалось сохранить категорию");
-      console.error("[catalog] save category failed", e);
+    } catch (e: any) {
+      const status = typeof e?.status === "number" ? e.status : null;
+      const message =
+        status === 401
+          ? "Сессия истекла: открой мини‑апп из Telegram заново"
+          : status === 403
+            ? "У этого Telegram-аккаунта нет прав администратора на сервере"
+            : "Не удалось сохранить категорию";
+      toast.error(message);
+      console.error("[catalog] save category failed", e?.body ?? e);
       throw e;
     }
   },
@@ -176,8 +182,16 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
     try {
       await Admin.deleteCategory(slug);
       set((s) => ({ categories: s.categories.filter((c) => c.slug !== slug) }));
-    } catch (e) {
-      toast.error("Не удалось удалить категорию");
+    } catch (e: any) {
+      const status = typeof e?.status === "number" ? e.status : null;
+      const message =
+        status === 401
+          ? "Сессия истекла: открой мини‑апп из Telegram заново"
+          : status === 403
+            ? "У этого Telegram-аккаунта нет прав администратора на сервере"
+            : "Не удалось удалить категорию";
+      toast.error(message);
+      console.error("[catalog] delete category failed", e?.body ?? e);
       throw e;
     }
   },
