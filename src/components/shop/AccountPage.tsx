@@ -6,6 +6,9 @@ import {
   ShoppingBag,
   Clock,
   Repeat,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAccount, type OrderRecord } from "@/store/account";
