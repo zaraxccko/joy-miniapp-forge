@@ -7,7 +7,7 @@ import { prisma } from "../db.js";
 import { requireAdmin } from "../auth/middleware.js";
 import { env } from "../env.js";
 import { broadcast, bot } from "../bot.js";
-import { serializeProduct } from "./catalog.js";
+import { serializeProduct, serializeCategory } from "./catalog.js";
 import { serialize as serializeOrder } from "./orders.js";
 
 export async function adminRoutes(app: FastifyInstance) {
@@ -292,6 +292,53 @@ export async function adminRoutes(app: FastifyInstance) {
       return { ok: true };
     }
   );
+
+  // ============== CATEGORIES CRUD ==============
+
+  const CategoryInput = z.object({
+    slug: z.string().min(1).max(64).regex(/^[a-z0-9_-]+$/i, "slug must be alphanumeric/_/-"),
+    name: z.union([z.string(), z.object({ ru: z.string(), en: z.string() })]),
+    emoji: z.string().max(8).optional(),
+    gradient: z.string().max(64).optional(),
+    sortOrder: z.number().int().optional(),
+  });
+
+  app.post("/admin/categories", { preHandler: requireAdmin }, async (req, reply) => {
+    const parsed = CategoryInput.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const { slug, name, emoji, gradient, sortOrder } = parsed.data;
+    const created = await prisma.category.upsert({
+      where: { slug },
+      update: { name: name as any, emoji, gradient, sortOrder },
+      create: { slug, name: name as any, emoji, gradient, sortOrder },
+    });
+    return serializeCategory(created);
+  });
+
+  app.put<{ Params: { slug: string } }>(
+    "/admin/categories/:slug",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      const parsed = CategoryInput.partial().safeParse(req.body);
+      if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+      const { name, emoji, gradient, sortOrder } = parsed.data;
+      const updated = await prisma.category.update({
+        where: { slug: req.params.slug },
+        data: { name: name as any, emoji, gradient, sortOrder },
+      });
+      return serializeCategory(updated);
+    }
+  );
+
+  app.delete<{ Params: { slug: string } }>(
+    "/admin/categories/:slug",
+    { preHandler: requireAdmin },
+    async (req) => {
+      await prisma.category.delete({ where: { slug: req.params.slug } });
+      return { ok: true };
+    }
+  );
+
 
   // ============== ANALYTICS ==============
 
