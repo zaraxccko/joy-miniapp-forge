@@ -324,6 +324,59 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
         </section>
 
       </main>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {lightbox.list.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((lb) => lb ? { ...lb, index: (lb.index - 1 + lb.list.length) % lb.list.length } : lb);
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+                aria-label="Prev"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((lb) => lb ? { ...lb, index: (lb.index + 1) % lb.list.length } : lb);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold">
+                {lightbox.index + 1} / {lightbox.list.length}
+              </div>
+            </>
+          )}
+
+          <img
+            src={lightbox.list[lightbox.index]}
+            alt="Full size"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg"
+          />
+        </div>
+      )}
     </div>
   );
 };
