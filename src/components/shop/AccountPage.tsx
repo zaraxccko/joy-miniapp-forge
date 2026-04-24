@@ -43,7 +43,7 @@ function stashLabel(t: StashType | undefined, lang: "ru" | "en"): string {
 }
 
 function renderLine(l: any, lang: "ru" | "en"): string {
-  const name = loc(l.product?.name, lang) || l.productName || "";
+  const name = loc(l.product?.name, lang) || loc(l.productName, lang) || "";
   const variant = l.variantId ? ` · ${l.variantId}` : "";
   const stash = l.stashType ? ` · ${stashLabel(l.stashType, lang)}` : "";
   return `${name}${variant}${stash} × ${l.qty}`;
