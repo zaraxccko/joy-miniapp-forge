@@ -82,7 +82,7 @@ export const Auth = {
 
 export const Catalog = {
   list: (city?: string) => api<any[]>(`/catalog${city ? `?city=${encodeURIComponent(city)}` : ""}`),
-  categories: () => api<string[]>("/categories"),
+  categories: () => api<any[]>("/categories"),
 };
 
 export const Orders = {
@@ -115,6 +115,9 @@ export const Admin = {
   createProduct: (data: any) => api("/admin/products", { method: "POST", body: data }),
   updateProduct: (id: string, data: any) => api(`/admin/products/${id}`, { method: "PUT", body: data }),
   deleteProduct: (id: string) => api(`/admin/products/${id}`, { method: "DELETE" }),
+  createCategory: (data: any) => api("/admin/categories", { method: "POST", body: data }),
+  updateCategory: (slug: string, data: any) => api(`/admin/categories/${slug}`, { method: "PUT", body: data }),
+  deleteCategory: (slug: string) => api(`/admin/categories/${slug}`, { method: "DELETE" }),
   analytics: () => api<any>("/admin/analytics"),
   broadcast: (payload: any) => api("/broadcast", { method: "POST", body: payload }),
 };
