@@ -72,6 +72,25 @@ const setLang = (
   return { ...base, [l]: val };
 };
 
+const resolveOrderItemName = (value: unknown, lang: "ru" | "en" = "ru"): string => {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+  if (typeof record[lang] === "string") return record[lang] as string;
+  if (typeof record.ru === "string") return record.ru as string;
+  if (typeof record.en === "string") return record.en as string;
+  if (record.name) return resolveOrderItemName(record.name, lang);
+
+  return "";
+};
+
+const adminCustomerLabel = (order: { customerUsername?: string; customerTgId?: number }) => {
+  if (order.customerUsername) return `@${order.customerUsername}`;
+  if (order.customerTgId) return `TG ${order.customerTgId}`;
+  return "Гость";
+};
+
 const fileToDataUrl = (file: File) =>
   new Promise<string>((res, rej) => {
     const r = new FileReader();
