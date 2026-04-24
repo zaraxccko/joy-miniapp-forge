@@ -105,12 +105,22 @@ export async function notifyAdmins(text: string): Promise<void> {
   );
 }
 
-// /start — премиум-приветствие
-bot.onText(/\/start/, async (msg) => {
-  try {
-    const name = (msg.from?.first_name || "").trim().replace(/[<>&]/g, "") || "друг";
+// ── /start — премиум-приветствие с поддержкой RU/EN ──────────────
+type WelcomeLang = "ru" | "en";
 
-    const text =
+function pickLang(code?: string | null): WelcomeLang {
+  if (!code) return "ru";
+  const c = code.toLowerCase();
+  // всё, что не похоже на русский/украинский/белорусский — в EN
+  if (c.startsWith("ru") || c.startsWith("uk") || c.startsWith("be")) return "ru";
+  return "en";
+}
+
+function welcomeText(lang: WelcomeLang, rawName: string): string {
+  const name = rawName.trim().replace(/[<>&]/g, "") || (lang === "ru" ? "друг" : "friend");
+
+  if (lang === "ru") {
+    return (
       `<b>${name}, добро пожаловать в Love Shop.</b>\n` +
       `\n` +
       `Закрытый бутик авторских сладостей в Азии 💎\n` +
@@ -124,15 +134,76 @@ bot.onText(/\/start/, async (msg) => {
       `— Оплата в крипте — конфиденциально\n` +
       `— Личный кабинет и история заказов\n` +
       `\n` +
-      `<i>Жми кнопку ниже — каталог уже ждёт.</i>`;
+      `<i>Жми кнопку ниже — каталог уже ждёт.</i>`
+    );
+  }
 
-    await bot.sendMessage(msg.chat.id, text, {
+  return (
+    `<b>${name}, welcome to Love Shop.</b>\n` +
+    `\n` +
+    `A private boutique of curated sweets in Asia 💎\n` +
+    `\n` +
+    `<b>Where we operate:</b>\n` +
+    `🇹🇭 Thailand · 🇮🇩 Bali · 🇻🇳 Vietnam · 🇲🇾 Kuala Lumpur\n` +
+    `\n` +
+    `<b>What's inside:</b>\n` +
+    `— Curated catalogue, updated regularly\n` +
+    `— Pickup from trusted spots\n` +
+    `— Crypto payments — fully private\n` +
+    `— Personal account & order history\n` +
+    `\n` +
+    `<i>Tap the button below — the catalogue is waiting.</i>`
+  );
+}
+
+function welcomeKeyboard(lang: WelcomeLang) {
+  const cta = lang === "ru" ? "🍬 Зайти в Love Shop" : "🍬 Enter Love Shop";
+  // вторая строка — переключатель языка (активный отмечен •)
+  const ruLabel = lang === "ru" ? "• Русский" : "Русский";
+  const enLabel = lang === "en" ? "• English" : "English";
+  return {
+    inline_keyboard: [
+      [{ text: cta, web_app: { url: env.webappUrl } }],
+      [
+        { text: ruLabel, callback_data: "welcome:lang:ru" },
+        { text: enLabel, callback_data: "welcome:lang:en" },
+      ],
+    ],
+  };
+}
+
+bot.onText(/\/start/, async (msg) => {
+  try {
+    const lang = pickLang(msg.from?.language_code);
+    const name = msg.from?.first_name || "";
+    await bot.sendMessage(msg.chat.id, welcomeText(lang, name), {
       parse_mode: "HTML",
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🍬 Зайти в Love Shop", web_app: { url: env.webappUrl } }],
-        ],
-      },
+      reply_markup: welcomeKeyboard(lang),
     });
   } catch {}
+});
+
+// Переключение языка приветствия прямо в сообщении.
+bot.on("callback_query", async (q) => {
+  try {
+    const data = q.data || "";
+    if (!data.startsWith("welcome:lang:")) return;
+    const lang: WelcomeLang = data.endsWith(":en") ? "en" : "ru";
+    const chatId = q.message?.chat.id;
+    const messageId = q.message?.message_id;
+    if (!chatId || !messageId) return;
+
+    const name = q.from?.first_name || "";
+    await bot.editMessageText(welcomeText(lang, name), {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: "HTML",
+      reply_markup: welcomeKeyboard(lang),
+    });
+    await bot.answerCallbackQuery(q.id, {
+      text: lang === "ru" ? "Язык: Русский" : "Language: English",
+    });
+  } catch {
+    try { await bot.answerCallbackQuery(q.id); } catch {}
+  }
 });
