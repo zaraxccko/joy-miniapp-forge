@@ -55,11 +55,20 @@ function resolveLineName(value: unknown, lang: "ru" | "en"): string {
   return "";
 }
 
-function renderLine(l: any, lang: "ru" | "en"): string {
+function renderLine(l: any, lang: "ru" | "en") {
   const name = resolveLineName(l.product?.name, lang) || resolveLineName(l.productName, lang) || "";
   const variant = l.variantId ? ` · ${l.variantId}` : "";
-  const stash = l.stashType ? ` · ${stashLabel(l.stashType, lang)}` : "";
-  return `${name}${variant}${stash} × ${l.qty}`;
+  const stash = l.stashType ? stashLabel(l.stashType, lang) : "";
+  return (
+    <>
+      <div>{name}{variant}</div>
+      {(stash || l.qty) && (
+        <div className="text-muted-foreground">
+          {stash}{stash ? " " : ""}× {l.qty}
+        </div>
+      )}
+    </>
+  );
 }
 
 export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
