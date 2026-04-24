@@ -4,13 +4,6 @@
 # Запускается как сервис `proxy` в docker-compose.
 # ============================================================
 
-{
-	# Сначала пробуем ZeroSSL (свой rate-limit, не связан с LE),
-	# если не получится — fallback на Let's Encrypt.
-	cert_issuer zerossl
-	cert_issuer acme
-}
-
 {$APP_DOMAINS} {
 	encode gzip zstd
 
