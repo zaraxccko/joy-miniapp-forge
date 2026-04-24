@@ -21,20 +21,36 @@ ALTER TABLE "categories"
   ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE "categories"
-  ALTER COLUMN "name" TYPE JSONB USING
-    CASE
-      WHEN jsonb_typeof("name") IS NOT NULL THEN "name"::jsonb
-      ELSE jsonb_build_object('ru', "name"::text, 'en', "name"::text)
-    END;
+DO $$
+DECLARE
+  name_type text;
+BEGIN
+  SELECT data_type
+    INTO name_type
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'categories'
+    AND column_name = 'name';
 
-UPDATE "categories"
-SET "name" = jsonb_build_object(
-  'ru', COALESCE("name"->>'ru', "name"->>'en', slug),
-  'en', COALESCE("name"->>'en', "name"->>'ru', slug)
-)
-WHERE jsonb_typeof("name") = 'object'
-  AND (("name"->>'ru') IS NULL OR ("name"->>'en') IS NULL);
+  IF name_type IN ('text', 'character varying') THEN
+    EXECUTE $sql$
+      ALTER TABLE "categories"
+      ALTER COLUMN "name" TYPE JSONB
+      USING jsonb_build_object('ru', "name", 'en', "name")
+    $sql$;
+  ELSIF name_type = 'jsonb' THEN
+    EXECUTE $sql$
+      UPDATE "categories"
+      SET "name" = jsonb_build_object(
+        'ru', COALESCE("name"->>'ru', "name"->>'en', slug),
+        'en', COALESCE("name"->>'en', "name"->>'ru', slug)
+      )
+      WHERE jsonb_typeof("name") <> 'object'
+         OR ("name"->>'ru') IS NULL
+         OR ("name"->>'en') IS NULL
+    $sql$;
+  END IF;
+END $$;
 
 UPDATE "categories"
 SET "updated_at" = CURRENT_TIMESTAMP
