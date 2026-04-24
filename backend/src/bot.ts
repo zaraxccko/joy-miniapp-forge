@@ -132,7 +132,9 @@ function welcomeText(lang: WelcomeLang, rawName: string): string {
       `• Только лучшие сорта и чистые кристаллы\n` +
       `• Максимальная маскировка и безопасность кладов\n` +
       `• Доставка в течении 40-60 минут на любую позицию\n` +
-      `• Оплата в крипте: наша безопасность — ваша конфиденциальность`
+      `• Оплата в крипте: наша безопасность — ваша конфиденциальность\n` +
+      `\n` +
+      `<b>🧊 Сделай свой трип незабываемым 🧊</b>`
     );
   }
 
@@ -148,7 +150,9 @@ function welcomeText(lang: WelcomeLang, rawName: string): string {
     `• Only the best varieties and pure crystals\n` +
     `• Maximum masking and safety of stashes\n` +
     `• Delivery within 40-60 minutes for any item\n` +
-    `• Payment in crypto: our safety — your confidentiality`
+    `• Payment in crypto: our safety — your confidentiality\n` +
+    `\n` +
+    `<b>🧊 Make your trip unforgettable 🧊</b>`
   );
 }
 
