@@ -65,8 +65,12 @@ export const useAdminPanel = create<AdminPanelState>((set, get) => ({
 
   confirmOrder: async (id, payload) => {
     try {
+      const files: File[] = [];
+      for (const [i, p] of (payload.photos ?? []).entries()) {
+        if (p?.startsWith("data:")) files.push(await dataUrlToFile(p, `confirm_${i}.jpg`));
+      }
       await Admin.confirmOrder(id, {
-        photo: payload.photo?.startsWith("data:") ? await dataUrlToFile(payload.photo, "confirm.jpg") : undefined,
+        photos: files.length ? files : undefined,
         text: payload.text,
       });
       await get().refreshAll();
