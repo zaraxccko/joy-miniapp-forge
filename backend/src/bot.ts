@@ -121,38 +121,34 @@ function welcomeText(lang: WelcomeLang, rawName: string): string {
 
   if (lang === "ru") {
     return (
-      `<b>${name}, добро пожаловать в Love Shop.</b>\n` +
+      `<b>${name}, добро пожаловать в Love Shop ❤️</b>\n` +
       `\n` +
-      `Закрытый бутик авторских сладостей в Азии 💎\n` +
+      `Закрытое сообщество авторских сладостей в Азии 🧸\n` +
       `\n` +
       `<b>География:</b>\n` +
       `🇹🇭 Таиланд · 🇮🇩 Бали · 🇻🇳 Вьетнам · 🇲🇾 Куала-Лумпур\n` +
       `\n` +
       `<b>Что внутри:</b>\n` +
-      `— Кураторский каталог, обновляется регулярно\n` +
-      `— Самовывоз из проверенных точек\n` +
-      `— Оплата в крипте — конфиденциально\n` +
-      `— Личный кабинет и история заказов\n` +
-      `\n` +
-      `<i>Жми кнопку ниже — каталог уже ждёт.</i>`
+      `• Только лучшие сорта и чистые кристаллы\n` +
+      `• Максимальная маскировка и безопасность кладов\n` +
+      `• Доставка в течении 40-60 минут на любую позицию\n` +
+      `• Оплата в крипте: наша безопасность — ваша конфиденциальность`
     );
   }
 
   return (
-    `<b>${name}, welcome to Love Shop.</b>\n` +
+    `<b>${name}, welcome to Love Shop ❤️</b>\n` +
     `\n` +
-    `A private boutique of curated sweets in Asia 💎\n` +
+    `Private community of author sweets in Asia 🧸\n` +
     `\n` +
-    `<b>Where we operate:</b>\n` +
+    `<b>Geography:</b>\n` +
     `🇹🇭 Thailand · 🇮🇩 Bali · 🇻🇳 Vietnam · 🇲🇾 Kuala Lumpur\n` +
     `\n` +
     `<b>What's inside:</b>\n` +
-    `— Curated catalogue, updated regularly\n` +
-    `— Pickup from trusted spots\n` +
-    `— Crypto payments — fully private\n` +
-    `— Personal account & order history\n` +
-    `\n` +
-    `<i>Tap the button below — the catalogue is waiting.</i>`
+    `• Only the best varieties and pure crystals\n` +
+    `• Maximum masking and safety of stashes\n` +
+    `• Delivery within 40-60 minutes for any item\n` +
+    `• Payment in crypto: our safety — your confidentiality`
   );
 }
 
