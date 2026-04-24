@@ -153,7 +153,7 @@ function welcomeText(lang: WelcomeLang, rawName: string): string {
 }
 
 function welcomeKeyboard(lang: WelcomeLang) {
-  const cta = lang === "ru" ? "🍬 Зайти в Love Shop" : "🍬 Enter Love Shop";
+  const cta = "🛍 Shop Now 🛍";
   // вторая строка — переключатель языка (активный отмечен •)
   const ruLabel = lang === "ru" ? "• Русский" : "Русский";
   const enLabel = lang === "en" ? "• English" : "English";
