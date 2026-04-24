@@ -1,8 +1,18 @@
 # ============================================================
 # Edge reverse-proxy для любого домена из env.
-# Caddy сам выпускает Let's Encrypt сертификат.
+# Caddy сам выпускает сертификат (ZeroSSL, затем Let's Encrypt fallback).
 # Запускается как сервис `proxy` в docker-compose.
 # ============================================================
+
+{
+	# Email для ACME-аккаунта (Let's Encrypt / ZeroSSL)
+	email {$ACME_EMAIL:admin@localhost}
+
+	# Сначала пробуем ZeroSSL (свой rate-limit, не связан с LE),
+	# если не получится — fallback на Let's Encrypt.
+	cert_issuer zerossl
+	cert_issuer acme
+}
 
 {$APP_DOMAINS} {
 	encode gzip zstd
