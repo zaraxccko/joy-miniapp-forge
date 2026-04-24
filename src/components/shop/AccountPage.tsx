@@ -284,8 +284,12 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                       <div className="font-bold">{formatTHB(o.totalUSD)}</div>
                       <div className="text-[11px] text-muted-foreground">{fmtDate(o.createdAt)}</div>
                     </div>
-                    <div className="mt-2 text-xs text-foreground/80 line-clamp-2">
-                      {o.items.map((l) => `${loc(l.product?.name, lang)}${l.variantId ? " · " + l.variantId : ""} × ${l.qty}`).join(" · ")}
+                    <div className="mt-2 space-y-0.5">
+                      {o.items.map((l, i) => (
+                        <div key={i} className="text-xs text-foreground/80">
+                          {renderLine(l, lang)}
+                        </div>
+                      ))}
                     </div>
                     {o.delivery && (
                       <div className="text-[11px] text-muted-foreground mt-1">
