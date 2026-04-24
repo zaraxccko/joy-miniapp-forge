@@ -34,8 +34,8 @@ interface CatalogState {
 
   upsertProduct: (p: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  upsertCategory: (c: Category) => void;
-  deleteCategory: (slug: string) => void;
+  upsertCategory: (c: Category) => Promise<void>;
+  deleteCategory: (slug: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -49,9 +49,16 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
     if (get().loading) return;
     set({ loading: true });
     try {
-      const products = await Catalog.list();
+      const [products, categories] = await Promise.all([
+        Catalog.list(),
+        Catalog.categories().catch(() => null),
+      ]);
       set({
         products: Array.isArray(products) ? (products as Product[]) : [],
+        categories:
+          Array.isArray(categories) && categories.length > 0
+            ? (categories as Category[])
+            : get().categories,
         loaded: true,
         loading: false,
       });
@@ -135,17 +142,45 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
     }
   },
 
-  upsertCategory: (c) =>
-    set((s) => {
-      const exists = s.categories.some((x) => x.slug === c.slug);
-      return {
+  upsertCategory: async (c) => {
+    const exists = get().categories.some((x) => x.slug === c.slug);
+    try {
+      if (exists) {
+        await Admin.updateCategory(c.slug, {
+          name: c.name,
+          emoji: c.emoji,
+          gradient: c.gradient,
+        });
+      } else {
+        await Admin.createCategory({
+          slug: c.slug,
+          name: c.name,
+          emoji: c.emoji,
+          gradient: c.gradient,
+        });
+      }
+      // Оптимистично + перезагрузка для синхронизации порядка/полей с бэка.
+      set((s) => ({
         categories: exists
           ? s.categories.map((x) => (x.slug === c.slug ? c : x))
           : [...s.categories, c],
-      };
-    }),
-  deleteCategory: (slug) =>
-    set((s) => ({ categories: s.categories.filter((c) => c.slug !== slug) })),
+      }));
+      await get().hydrate();
+    } catch (e) {
+      toast.error("Не удалось сохранить категорию");
+      console.error("[catalog] save category failed", e);
+      throw e;
+    }
+  },
+  deleteCategory: async (slug) => {
+    try {
+      await Admin.deleteCategory(slug);
+      set((s) => ({ categories: s.categories.filter((c) => c.slug !== slug) }));
+    } catch (e) {
+      toast.error("Не удалось удалить категорию");
+      throw e;
+    }
+  },
   reset: () => set({ categories: DEFAULT_CATEGORIES, products: [], loaded: false }),
 }));
 

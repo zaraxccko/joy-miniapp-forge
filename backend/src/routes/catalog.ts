@@ -23,12 +23,23 @@ export async function catalogRoutes(app: FastifyInstance) {
 
   /**
    * GET /api/categories
-   * Возвращает уникальные категории, использованные в товарах.
+   * Возвращает справочник категорий из БД (slug + локализованное имя + emoji + gradient).
    */
   app.get("/categories", async () => {
-    const rows = await prisma.product.findMany({ select: { category: true }, distinct: ["category"] });
-    return rows.map((r) => r.category);
+    const rows = await prisma.category.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return rows.map(serializeCategory);
   });
+}
+
+export function serializeCategory(c: any) {
+  return {
+    slug: c.slug,
+    name: c.name,
+    emoji: c.emoji,
+    gradient: c.gradient,
+  };
 }
 
 export function serializeProduct(p: any) {

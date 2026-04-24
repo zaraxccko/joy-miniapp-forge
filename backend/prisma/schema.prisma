@@ -54,6 +54,19 @@ model Product {
   @@map("products")
 }
 
+model Category {
+  slug       String   @id
+  // LocalizedString {ru, en} stored as JSONB
+  name       Json
+  emoji      String   @default("✨")
+  gradient   String   @default("gradient-primary")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
 model Variant {
   id              String  @id @default(cuid())
   productId       String  @map("product_id")
