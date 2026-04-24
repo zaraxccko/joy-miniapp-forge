@@ -150,7 +150,9 @@ function welcomeText(lang: WelcomeLang, rawName: string): string {
     `• Only the best varieties and pure crystals\n` +
     `• Maximum masking and safety of stashes\n` +
     `• Delivery within 40-60 minutes for any item\n` +
-    `• Payment in crypto: our safety — your confidentiality`
+    `• Payment in crypto: our safety — your confidentiality\n` +
+    `\n` +
+    `<b>🧊 Make your trip unforgettable 🧊</b>`
   );
 }
 
