@@ -96,6 +96,20 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
   const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
   const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
 
+  // ── Лайтбокс: клавиатура ──────────────────────────────────────
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") setLightbox((lb) => lb ? { ...lb, index: (lb.index + 1) % lb.list.length } : lb);
+      if (e.key === "ArrowLeft")  setLightbox((lb) => lb ? { ...lb, index: (lb.index - 1 + lb.list.length) % lb.list.length } : lb);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [lightbox]);
+
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", {
       day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
