@@ -199,6 +199,20 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                 </span>
               </div>
               <div className="font-display font-bold text-xl">{formatTHB(awaitingOrder.totalUSD)}</div>
+              {awaitingOrder.items.length > 0 && (
+                <div className="space-y-1">
+                  {awaitingOrder.items.map((l, i) => (
+                    <div key={i} className="text-xs text-foreground/80">
+                      {renderLine(l, lang)}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {awaitingOrder.delivery && (
+                <div className="text-[11px] text-muted-foreground">
+                  🚚 {tr("Доставка", "Delivery")}{awaitingOrder.deliveryAddress ? ` · ${awaitingOrder.deliveryAddress}` : ""}
+                </div>
+              )}
             </div>
           ) : cartLines.length === 0 ? (
             <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
