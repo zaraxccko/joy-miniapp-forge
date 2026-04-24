@@ -925,6 +925,10 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
             <Button
               onClick={async () => {
                 if (!editingP) return;
+                if (!editingP.category || !editingP.category.trim()) {
+                  toast.error("Выберите категорию");
+                  return;
+                }
                 try {
                   await upsertProduct(editingP);
                   setEditingP(null);
