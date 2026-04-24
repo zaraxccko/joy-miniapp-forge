@@ -61,14 +61,11 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
     };
   }, [hydrate]);
 
-  // ── Активный/подтверждённый заказ ─────────────────────────────
-  const activeOrder =
-    orders.find((o) => o.status === "awaiting") ??
-    orders.find((o) => (o.status === "completed" || o.status === "paid" || o.status === "in_delivery") && (o.confirmPhoto || o.confirmText)) ??
-    null;
-  const awaitingOrder = activeOrder?.status === "awaiting" ? activeOrder : null;
-  const confirmedOrder = activeOrder && activeOrder.status !== "awaiting" ? activeOrder : null;
-  const allHistory = orders.filter((o) => o.id !== confirmedOrder?.id);
+  // ── Активный заказ ─────────────────────────────────────────────
+  // Активным считаем ТОЛЬКО awaiting (ждёт подтверждения от магазина).
+  // Подтверждённые/отменённые сразу уезжают в историю — пользователь может оформить новый.
+  const awaitingOrder = orders.find((o) => o.status === "awaiting") ?? null;
+  const allHistory = orders.filter((o) => o.status !== "awaiting");
 
   // ── Фильтр истории ────────────────────────────────────────────
   const [filter, setFilter] = useState<HistoryFilter>("all");
