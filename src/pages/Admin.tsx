@@ -1154,7 +1154,7 @@ const DepositsTab = ({ standalone = false }: { standalone?: boolean }) => {
                         ${o.totalUSD}{o.crypto ? <span className="text-sm text-muted-foreground font-normal"> · {o.crypto}</span> : null}
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
-                        {o.customerName ?? (o.customerTgId ? `TG ${o.customerTgId}` : "Гость")} · {fmt(o.createdAt)}
+                        {o.customerTgUsername ? `@${o.customerTgUsername}` : (o.customerTgId ? `TG ${o.customerTgId}` : "Гость")} · {fmt(o.createdAt)}
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${statusClass.awaiting}`}>
