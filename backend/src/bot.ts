@@ -105,12 +105,29 @@ export async function notifyAdmins(text: string): Promise<void> {
   );
 }
 
-// /start — показать кнопку открытия мини-приложения
+// /start — стильное приветствие с кнопкой запуска мини-приложения
 bot.onText(/\/start/, async (msg) => {
   try {
-    await bot.sendMessage(msg.chat.id, "Открой магазин 👇", {
+    const name = msg.from?.first_name?.trim() || "друг";
+    const safeName = name.replace(/[<>&]/g, "");
+
+    const text =
+      `🌸 <b>Привет, ${safeName}!</b>\n` +
+      `Добро пожаловать в <b>Love Shop</b> — твой бутик сладостей в Азии 🍬\n\n` +
+      `🇹🇭 Таиланд · 🇮🇩 Бали · 🇻🇳 Вьетнам · 🇲🇾 KL\n\n` +
+      `✨ <b>Что внутри:</b>\n` +
+      `🛍 Свежий каталог с фото и ценами\n` +
+      `📍 Самовывоз из ближайших точек\n` +
+      `💎 Оплата в крипте — быстро и приватно\n` +
+      `⚡️ Моментальные уведомления о заказе\n\n` +
+      `Жми кнопку ниже и залетай 👇`;
+
+    await bot.sendMessage(msg.chat.id, text, {
+      parse_mode: "HTML",
       reply_markup: {
-        inline_keyboard: [[{ text: "🛒 Открыть магазин", web_app: { url: env.webappUrl } }]],
+        inline_keyboard: [
+          [{ text: "🛒 Открыть магазин", web_app: { url: env.webappUrl } }],
+        ],
       },
     });
   } catch {}
