@@ -18,6 +18,7 @@ import { useTelegram, haptic } from "@/lib/telegram";
 import { useCatalog } from "@/store/catalog";
 import { formatTHB } from "@/lib/format";
 import { loc } from "@/lib/loc";
+import { STASH_TYPES, type StashType } from "@/types/shop";
 
 interface AccountPageProps {
   onBack: () => void;
@@ -34,6 +35,19 @@ const statusMeta = {
 } as const;
 
 type HistoryFilter = "all" | "confirmed" | "cancelled";
+
+function stashLabel(t: StashType | undefined, lang: "ru" | "en"): string {
+  if (!t) return "";
+  const meta = STASH_TYPES.find((s) => s.value === t);
+  return meta ? `${meta.emoji} ${meta.label[lang]}` : "";
+}
+
+function renderLine(l: any, lang: "ru" | "en"): string {
+  const name = loc(l.product?.name, lang) || l.productName || "";
+  const variant = l.variantId ? ` · ${l.variantId}` : "";
+  const stash = l.stashType ? ` · ${stashLabel(l.stashType, lang)}` : "";
+  return `${name}${variant}${stash} × ${l.qty}`;
+}
 
 export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPageProps) => {
   const lang = useI18n((s) => s.lang) ?? "ru";
@@ -198,6 +212,20 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                 </span>
               </div>
               <div className="font-display font-bold text-xl">{formatTHB(awaitingOrder.totalUSD)}</div>
+              {awaitingOrder.items.length > 0 && (
+                <div className="space-y-1">
+                  {awaitingOrder.items.map((l, i) => (
+                    <div key={i} className="text-xs text-foreground/80">
+                      {renderLine(l, lang)}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {awaitingOrder.delivery && (
+                <div className="text-[11px] text-muted-foreground">
+                  🚚 {tr("Доставка", "Delivery")}{awaitingOrder.deliveryAddress ? ` · ${awaitingOrder.deliveryAddress}` : ""}
+                </div>
+              )}
             </div>
           ) : cartLines.length === 0 ? (
             <div className="rounded-2xl bg-card shadow-card p-4 text-sm text-muted-foreground text-center">
@@ -269,8 +297,12 @@ export const AccountPage = ({ onBack, onOpenCart, onOpenActiveOrder }: AccountPa
                       <div className="font-bold">{formatTHB(o.totalUSD)}</div>
                       <div className="text-[11px] text-muted-foreground">{fmtDate(o.createdAt)}</div>
                     </div>
-                    <div className="mt-2 text-xs text-foreground/80 line-clamp-2">
-                      {o.items.map((l) => `${loc(l.product?.name, lang)}${l.variantId ? " · " + l.variantId : ""} × ${l.qty}`).join(" · ")}
+                    <div className="mt-2 space-y-0.5">
+                      {o.items.map((l, i) => (
+                        <div key={i} className="text-xs text-foreground/80">
+                          {renderLine(l, lang)}
+                        </div>
+                      ))}
                     </div>
                     {o.delivery && (
                       <div className="text-[11px] text-muted-foreground mt-1">
