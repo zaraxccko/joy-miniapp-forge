@@ -18,6 +18,7 @@ import { useTelegram, haptic } from "@/lib/telegram";
 import { useCatalog } from "@/store/catalog";
 import { formatTHB } from "@/lib/format";
 import { loc } from "@/lib/loc";
+import { STASH_TYPES, type StashType } from "@/types/shop";
 
 interface AccountPageProps {
   onBack: () => void;
