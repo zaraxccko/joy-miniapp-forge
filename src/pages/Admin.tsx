@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AnalyticsTab } from "@/components/shop/admin/AnalyticsTab";
 import { BroadcastTab } from "@/components/shop/admin/BroadcastTab";
 import { ImageCropper } from "@/components/shop/admin/ImageCropper";
+import { toast } from "sonner";
 
 const GRADIENTS = ["gradient-mango", "gradient-mint", "gradient-grape", "gradient-primary", "gradient-hero"];
 
@@ -363,6 +364,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
             onClick={() => {
               const p = blankProduct();
               if (activeCity) p.cities = [activeCity.slug];
+              if (!p.category && categories[0]?.slug) p.category = categories[0].slug;
               setEditingP(p);
             }}
             className="w-full gradient-primary"
@@ -924,6 +926,10 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
             <Button
               onClick={async () => {
                 if (!editingP) return;
+                if (!editingP.category || !editingP.category.trim()) {
+                  toast.error("Выберите категорию");
+                  return;
+                }
                 try {
                   await upsertProduct(editingP);
                   setEditingP(null);
