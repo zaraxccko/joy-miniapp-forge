@@ -18,8 +18,8 @@ cp backend/.env.example backend/.env
 Открой и отредактируй:
 
 **`.env` (root)** — для фронта и прокси:
-- `APP_DOMAINS=prxvt.ink, www.prxvt.ink`
-- `VITE_API_URL=https://prxvt.ink/api`
+- `APP_DOMAINS=your-domain.com, www.your-domain.com`
+- `VITE_API_URL=https://your-domain.com/api`
 - `VITE_ADMIN_IDS=твой_telegram_id`
 - `POSTGRES_PASSWORD=сильный_пароль`
 
@@ -28,9 +28,9 @@ cp backend/.env.example backend/.env
 - `JWT_SECRET=` → сгенерируй: `openssl rand -hex 32`
 - `TELEGRAM_BOT_TOKEN=` от @BotFather
 - `ADMIN_TG_IDS=` тот же ID, что в `VITE_ADMIN_IDS`
-- `WEBAPP_URL=https://prxvt.ink`
-- `CORS_ORIGIN=https://prxvt.ink`
-- `PUBLIC_UPLOAD_URL=https://prxvt.ink/uploads`
+- `WEBAPP_URL=https://your-domain.com`
+- `CORS_ORIGIN=https://your-domain.com`
+- `PUBLIC_UPLOAD_URL=https://your-domain.com/uploads`
 
 ## 3. Запуск
 

@@ -6,7 +6,7 @@ DOMAINS="${APP_DOMAINS:-}"
 if [ -z "$DOMAINS" ]; then
   SOURCE_URL="${WEBAPP_URL:-${VITE_API_URL:-}}"
   if [ -n "$SOURCE_URL" ]; then
-    HOST=$(printf '%s' "$SOURCE_URL" | sed -E 's#^[A-Za-z]+://##; s#/.*$##; s/:.*$##')
+    HOST=$(printf '%s' "$SOURCE_URL" | sed -E 's#^[A-Za-z]+://##; s#/.*$##; s#:.*$##')
     if [ -n "$HOST" ]; then
       case "$HOST" in
         www.*)

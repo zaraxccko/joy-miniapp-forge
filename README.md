@@ -175,6 +175,8 @@ VITE_API_URL=https://твой-домен.com/api
 
 **WebApp пишет "login failed"** — `WEBAPP_URL` в `.env` бэка должен ровно совпадать с доменом, откуда открывается фронт.
 
+**После скачивания zip не поднимается HTTPS** — проверь, что в root `.env` задан `APP_DOMAINS=your-domain.com, www.your-domain.com` или хотя бы заполнен `WEBAPP_URL`/`VITE_API_URL`, чтобы proxy не пытался выпускать сертификат на чужой домен.
+
 **CORS-ошибки** — добавь свой домен в `CORS_ORIGIN` (через запятую можно несколько).
 
 **Не приходят фото подтверждений** — проверь, что nginx раздаёт `/uploads/` из той же папки, куда монтируется volume `uploads` в docker-compose.
