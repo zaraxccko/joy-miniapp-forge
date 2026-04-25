@@ -93,8 +93,21 @@ export const Orders = {
     deliveryAddress?: string;
     crypto?: string;
     payAddress?: string;
+    promoCode?: string;
   }) => api<any>("/orders", { method: "POST", body: payload }),
   mine: () => api<any[]>("/orders/me"),
+};
+
+export interface PromoValidation {
+  code: string;
+  discountPct: number;
+  discountUSD: number;
+  finalUSD: number;
+}
+
+export const Promo = {
+  validate: (code: string, totalUSD: number) =>
+    api<PromoValidation>("/promo/validate", { method: "POST", body: { code, totalUSD } }),
 };
 
 export const Admin = {
