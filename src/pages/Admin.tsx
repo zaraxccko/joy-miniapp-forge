@@ -235,7 +235,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
 
         <button
           onClick={() => setSelectedCountry("__deposits__")}
-          className="w-full bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] flex items-center gap-3 mb-4 text-left"
+          className="w-full bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] flex items-center gap-3 mb-3 text-left"
         >
           <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-2xl shrink-0">
             💸
@@ -255,7 +255,20 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
           )}
         </button>
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <button
+          onClick={() => setSelectedCountry("__promo__")}
+          className="w-full bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] flex items-center gap-3 mb-4 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl gradient-mango flex items-center justify-center text-2xl shrink-0">
+            🎟️
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-sm">Промокоды</div>
+            <div className="text-[11px] text-muted-foreground">Создание и управление скидками</div>
+          </div>
+        </button>
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => setSelectedCountry("__analytics__")}
             className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
@@ -273,15 +286,6 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📢
             </div>
             <div className="font-bold text-sm">Рассылка</div>
-          </button>
-          <button
-            onClick={() => setSelectedCountry("__promo__")}
-            className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
-          >
-            <div className="w-10 h-10 rounded-xl gradient-mango flex items-center justify-center text-xl mb-2">
-              🎟️
-            </div>
-            <div className="font-bold text-sm">Промокоды</div>
           </button>
         </div>
 
