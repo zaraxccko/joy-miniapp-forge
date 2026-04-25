@@ -291,6 +291,49 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
               </section>
             )}
 
+            {/* Promo code */}
+            <section className="rounded-2xl bg-card shadow-card p-4 space-y-2">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                {tr("Промокод", "Promo code")}
+              </div>
+              {promo ? (
+                <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono font-bold text-sm">{promo.code}</div>
+                    <div className="text-[11px] text-primary font-semibold">
+                      −{promo.discountPct}% · −{formatTHB(promo.discountUSD)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={removePromo}
+                    className="w-8 h-8 rounded-full bg-card flex items-center justify-center active:scale-90"
+                    aria-label={tr("Убрать", "Remove")}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder={tr("Введите код", "Enter code")}
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm font-mono uppercase placeholder:font-sans placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-primary"
+                    maxLength={64}
+                    onKeyDown={(e) => { if (e.key === "Enter") applyPromo(); }}
+                  />
+                  <button
+                    onClick={applyPromo}
+                    disabled={promoLoading || !promoInput.trim()}
+                    className="px-4 rounded-xl gradient-primary text-primary-foreground font-bold text-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {promoLoading ? "…" : tr("Применить", "Apply")}
+                  </button>
+                </div>
+              )}
+            </section>
+
             {/* Totals */}
             <section className="rounded-2xl bg-card shadow-card p-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -303,9 +346,15 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
                   <span>+${DELIVERY_FEE_USD}</span>
                 </div>
               )}
+              {promo && (
+                <div className="flex items-center justify-between text-xs text-primary font-semibold">
+                  <span>{tr("Промокод", "Promo")} {promo.code} (−{promo.discountPct}%)</span>
+                  <span>−{formatTHB(promo.discountUSD)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2 border-t border-border">
                 <span className="font-semibold">{tr("К оплате", "Total")}</span>
-                <span className="font-display font-bold text-2xl">{formatTHB(total)}</span>
+                <span className="font-display font-bold text-2xl">{formatTHB(finalTotal)}</span>
               </div>
             </section>
 
@@ -339,7 +388,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
 
             {/* Crypto amount + копирование */}
             <CryptoAmountCard
-              amountUSD={total}
+              amountUSD={finalTotal}
               crypto={crypto}
               cryptoName={
                 cryptoMeta.name === cryptoMeta.network || cryptoMeta.code === cryptoMeta.network
