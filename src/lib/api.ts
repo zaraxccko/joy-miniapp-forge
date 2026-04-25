@@ -133,4 +133,10 @@ export const Admin = {
   deleteCategory: (slug: string) => api(`/admin/categories/${slug}`, { method: "DELETE" }),
   analytics: () => api<any>("/admin/analytics"),
   broadcast: (payload: any) => api("/broadcast", { method: "POST", body: payload }),
+  promoList: () => api<Array<{ id: string; code: string; discountPct: number; active: boolean; createdAt: string; redemptions: number }>>("/admin/promo"),
+  promoCreate: (payload: { code: string; discountPct: number; active?: boolean }) =>
+    api<{ id: string; code: string; discountPct: number; active: boolean }>("/admin/promo", { method: "POST", body: payload }),
+  promoUpdate: (id: string, payload: { active?: boolean; discountPct?: number }) =>
+    api(`/admin/promo/${id}`, { method: "PATCH", body: payload }),
+  promoDelete: (id: string) => api(`/admin/promo/${id}`, { method: "DELETE" }),
 };
