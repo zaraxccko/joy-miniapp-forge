@@ -33,6 +33,7 @@ const CreateOrderSchema = z.object({
   deliveryAddress: z.string().max(500).nullish(),
   crypto: z.string().nullish(),
   payAddress: z.string().nullish(),
+  promoCode: z.string().min(1).max(64).nullish(),
 });
 
 export async function orderRoutes(app: FastifyInstance) {
