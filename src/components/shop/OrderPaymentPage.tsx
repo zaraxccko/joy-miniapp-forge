@@ -88,7 +88,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
       ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
       : user?.username ? `@${user.username}` : undefined;
     const snapshot = {
-      totalUSD: total,
+      totalUSD: finalTotal,
       items: lines,
       delivery,
       deliveryAddress: delivery ? deliveryAddress : undefined,
@@ -97,6 +97,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
       customerTgId: user?.id,
       crypto,
       payAddress: cryptoMeta.address,
+      promoCode: promo?.code,
     };
     try {
       await addOrder(snapshot);
@@ -115,6 +116,10 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
         ? tr("Ошибка данных заказа — проверьте корзину", "Invalid order data — check the cart")
         : code === "unauthorized"
         ? tr("Сессия истекла — перезайдите через Telegram", "Session expired — re-open via Telegram")
+        : code === "promo_not_found"
+        ? tr("Промокод недействителен", "Promo code is invalid")
+        : code === "promo_already_used"
+        ? tr("Этот промокод уже использован", "You already used this promo")
         : tr(`Не удалось оформить заказ${code ? `: ${code}` : ""}`, `Failed to place order${code ? `: ${code}` : ""}`);
       haptic("error");
       toast.error(msg);
