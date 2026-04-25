@@ -15,6 +15,7 @@ import { meRoutes } from "./routes/me.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { orderRoutes } from "./routes/orders.js";
 import { adminRoutes } from "./routes/admin.js";
+import { promoRoutes } from "./routes/promo.js";
 import "./bot.js"; // запускает long-polling
 import fs from "node:fs";
 
@@ -51,6 +52,7 @@ async function main() {
       await catalogRoutes(api);
       await orderRoutes(api);
       await adminRoutes(api);
+      await promoRoutes(api);
     },
     { prefix: "/api" }
   );

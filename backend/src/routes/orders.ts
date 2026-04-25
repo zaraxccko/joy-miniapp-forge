@@ -33,6 +33,7 @@ const CreateOrderSchema = z.object({
   deliveryAddress: z.string().max(500).nullish(),
   crypto: z.string().nullish(),
   payAddress: z.string().nullish(),
+  promoCode: z.string().min(1).max(64).nullish(),
 });
 
 export async function orderRoutes(app: FastifyInstance) {
@@ -77,30 +78,72 @@ export async function orderRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { tgId: req.user!.tgId } });
     if (!user) return reply.code(401).send({ error: "unauthorized" });
 
-    try {
-      const order = await prisma.order.create({
-        data: {
-          userTgId: user.tgId,
-          totalUSD: data.totalUSD,
-          items: snapshotItems as any,
-          delivery: data.delivery,
-          deliveryAddress: data.deliveryAddress ?? undefined,
-          crypto: data.crypto ?? undefined,
-          payAddress: data.payAddress ?? undefined,
-          status: "awaiting",
+    // ---- Promo code (optional). Validate + redeem atomically.
+    let appliedPromo: { code: string; discountPct: number; discountUSD: number } | null = null;
+    let finalTotalUSD = data.totalUSD;
+    let promoIdToRedeem: string | null = null;
+
+    if (data.promoCode) {
+      const code = data.promoCode.trim().toUpperCase();
+      const promo = await prisma.promoCode.findUnique({ where: { code } });
+      if (!promo || !promo.active) {
+        return reply.code(400).send({ error: "promo_not_found" });
+      }
+      const used = await prisma.promoRedemption.findUnique({
+        where: {
+          promo_redemptions_promo_user_key: { promoId: promo.id, userTgId: user.tgId },
         },
+      }).catch(() => null);
+      if (used) return reply.code(409).send({ error: "promo_already_used" });
+
+      const discountUSD = Math.round(data.totalUSD * promo.discountPct) / 100;
+      finalTotalUSD = Math.max(0, Math.round((data.totalUSD - discountUSD) * 100) / 100);
+      promoIdToRedeem = promo.id;
+      appliedPromo = { code: promo.code, discountPct: promo.discountPct, discountUSD: Math.round(discountUSD * 100) / 100 };
+    }
+
+    try {
+      const order = await prisma.$transaction(async (tx) => {
+        const created = await tx.order.create({
+          data: {
+            userTgId: user.tgId,
+            totalUSD: finalTotalUSD,
+            items: snapshotItems as any,
+            delivery: data.delivery,
+            deliveryAddress: data.deliveryAddress ?? undefined,
+            crypto: data.crypto ?? undefined,
+            payAddress: data.payAddress ?? undefined,
+            status: "awaiting",
+          },
+        });
+        if (promoIdToRedeem && appliedPromo) {
+          // Unique (promoId, userTgId) — race-safe.
+          await tx.promoRedemption.create({
+            data: {
+              promoId: promoIdToRedeem,
+              userTgId: user.tgId,
+              orderId: created.id,
+              discountPct: appliedPromo.discountPct,
+            },
+          });
+        }
+        return created;
       });
 
       try {
         const who = user.username ? `@${user.username}` : user.firstName ?? `tg:${order.userTgId}`;
         const itemsCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
         const cryptoLine = order.crypto ? ` (${order.crypto})` : "";
+        const promoLine = appliedPromo
+          ? `\n🎟️ промокод: ${appliedPromo.code} (-${appliedPromo.discountPct}% / -$${appliedPromo.discountUSD.toFixed(2)})`
+          : "";
         const text =
           `🛒 <b>Новая заявка на заказ</b> #${order.id}\n` +
           `👤 ${who}\n` +
           `💰 $${order.totalUSD.toFixed(2)}${cryptoLine}\n` +
           `📦 позиций: ${itemsCount}` +
-          (order.delivery ? `\n🚚 доставка: ${order.deliveryAddress ?? "—"}` : "");
+          (order.delivery ? `\n🚚 доставка: ${order.deliveryAddress ?? "—"}` : "") +
+          promoLine;
         notifyAdmins(text).catch((err) =>
           req.log.error({ err }, "notifyAdmins failed for new order")
         );
@@ -110,6 +153,9 @@ export async function orderRoutes(app: FastifyInstance) {
 
       return serialize(order);
     } catch (e: any) {
+      if (e?.code === "P2002" && String(e?.meta?.target ?? "").includes("promo")) {
+        return reply.code(409).send({ error: "promo_already_used" });
+      }
       req.log.error({ err: e, body: req.body }, "failed to create order");
       return reply.code(500).send({ error: "internal", message: String(e?.message ?? e) });
     }

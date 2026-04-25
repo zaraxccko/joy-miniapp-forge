@@ -41,7 +41,7 @@ interface AccountState {
   orders: OrderRecord[];
   hydrate: () => Promise<void>;
   addOrder: (
-    o: Omit<OrderRecord, "id" | "createdAt" | "status"> & { status?: OrderHistoryStatus }
+    o: Omit<OrderRecord, "id" | "createdAt" | "status"> & { status?: OrderHistoryStatus; promoCode?: string }
   ) => Promise<OrderRecord>;
   confirmOrder: (id: string, payload: { photo?: string; text?: string }) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
@@ -74,6 +74,7 @@ export const useAccount = create<AccountState>((set, get) => ({
       deliveryAddress: o.deliveryAddress,
       crypto: o.crypto,
       payAddress: o.payAddress,
+      promoCode: o.promoCode,
     })) as OrderRecord;
     set((s) => ({ orders: [created, ...s.orders.filter((x) => x.id !== created.id)] }));
     return created;

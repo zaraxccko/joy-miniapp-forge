@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AnalyticsTab } from "@/components/shop/admin/AnalyticsTab";
 import { BroadcastTab } from "@/components/shop/admin/BroadcastTab";
 import { ImageCropper } from "@/components/shop/admin/ImageCropper";
+import { PromoTab } from "@/components/shop/admin/PromoTab";
 import { toast } from "sonner";
 
 const GRADIENTS = ["gradient-mango", "gradient-mint", "gradient-grape", "gradient-primary", "gradient-hero"];
@@ -198,6 +199,24 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
     );
   }
 
+  if (selectedCountry === "__promo__") {
+    return (
+      <div className="min-h-screen max-w-md mx-auto bg-background px-5 pt-6 pb-10">
+        <header className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setSelectedCountry(null)}
+            className="w-10 h-10 rounded-2xl bg-card shadow-card flex items-center justify-center active:scale-95"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="font-display font-bold text-base flex-1 text-center">Промокоды</h1>
+          <span className="w-10" />
+        </header>
+        <PromoTab />
+      </div>
+    );
+  }
+
   // Geo picker — country first
   if (!selectedCountry) {
     const awaitingCount = awaitingOrders.length;
@@ -236,7 +255,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
           )}
         </button>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => setSelectedCountry("__analytics__")}
             className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
@@ -245,7 +264,6 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📊
             </div>
             <div className="font-bold text-sm">Аналитика</div>
-            
           </button>
           <button
             onClick={() => setSelectedCountry("__broadcast__")}
@@ -255,7 +273,15 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📢
             </div>
             <div className="font-bold text-sm">Рассылка</div>
-            
+          </button>
+          <button
+            onClick={() => setSelectedCountry("__promo__")}
+            className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
+          >
+            <div className="w-10 h-10 rounded-xl gradient-mango flex items-center justify-center text-xl mb-2">
+              🎟️
+            </div>
+            <div className="font-bold text-sm">Промокоды</div>
           </button>
         </div>
 

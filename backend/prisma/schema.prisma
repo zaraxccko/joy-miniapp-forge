@@ -142,6 +142,34 @@ model Order {
   @@map("orders")
 }
 
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  discountPct Int      @map("discount_pct")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  redemptions PromoRedemption[]
+
+  @@map("promo_codes")
+}
+
+model PromoRedemption {
+  id          String   @id @default(cuid())
+  promoId     String   @map("promo_id")
+  userTgId    BigInt   @map("user_tg_id")
+  orderId     String?  @map("order_id")
+  discountPct Int      @map("discount_pct")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  promo       PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
+
+  @@unique([promoId, userTgId], map: "promo_redemptions_promo_user_key")
+  @@index([userTgId])
+  @@map("promo_redemptions")
+}
+
 model BroadcastLog {
   id          String   @id @default(cuid())
   segment     String

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, Copy, Clock, Truck, MapPin } from "lucide-react";
+import { ArrowLeft, Check, Copy, Clock, Truck, MapPin, Tag, X } from "lucide-react";
 import { CRYPTO_LIST, useAccount, type CryptoCode } from "@/store/account";
 import { useCart, RESERVATION_MS, DELIVERY_FEE_USD } from "@/store/cart";
 import { useI18n } from "@/lib/i18n";
@@ -9,6 +9,7 @@ import { loc } from "@/lib/loc";
 import { findDistrict } from "@/data/locations";
 import { STASH_TYPES } from "@/types/shop";
 import { CryptoAmountCard } from "@/components/shop/CryptoAmountCard";
+import { Promo, ApiError } from "@/lib/api";
 import { toast } from "sonner";
 
 interface OrderPaymentPageProps {
@@ -53,10 +54,50 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
   const [submitting, setSubmitting] = useState(false);
   const cryptoMeta = useMemo(() => CRYPTO_LIST.find((c) => c.code === crypto)!, [crypto]);
 
+  // ---- Promo code ----
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ code: string; discountPct: number; discountUSD: number } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const finalTotal = useMemo(
+    () => (promo ? Math.max(0, Math.round((total - promo.discountUSD) * 100) / 100) : total),
+    [total, promo]
+  );
+
   // Reservation timer
   const msLeft = reservedAt ? Math.max(0, reservedAt + RESERVATION_MS - Date.now()) : 0;
   const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
   const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
+
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoLoading(true);
+    try {
+      const res = await Promo.validate(code, total);
+      setPromo({ code: res.code, discountPct: res.discountPct, discountUSD: res.discountUSD });
+      haptic("success");
+      toast.success(tr(`Скидка −${res.discountPct}% применена`, `Discount −${res.discountPct}% applied`));
+    } catch (e) {
+      const err = e as ApiError;
+      const errCode = err?.body && typeof err.body === "object" ? (err.body as any).error : undefined;
+      const msg = errCode === "promo_not_found"
+        ? tr("Промокод не найден", "Promo code not found")
+        : errCode === "promo_already_used"
+        ? tr("Этот промокод уже использован", "You already used this promo")
+        : tr("Не удалось применить промокод", "Failed to apply promo");
+      haptic("error");
+      toast.error(msg);
+      setPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromo(null);
+    setPromoInput("");
+  };
 
   const copy = async (text: string) => {
     try {
@@ -87,7 +128,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
       ? `${user.first_name}${user.last_name ? " " + user.last_name : ""}${user.username ? ` (@${user.username})` : ""}`
       : user?.username ? `@${user.username}` : undefined;
     const snapshot = {
-      totalUSD: total,
+      totalUSD: finalTotal,
       items: lines,
       delivery,
       deliveryAddress: delivery ? deliveryAddress : undefined,
@@ -96,6 +137,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
       customerTgId: user?.id,
       crypto,
       payAddress: cryptoMeta.address,
+      promoCode: promo?.code,
     };
     try {
       await addOrder(snapshot);
@@ -114,6 +156,10 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
         ? tr("Ошибка данных заказа — проверьте корзину", "Invalid order data — check the cart")
         : code === "unauthorized"
         ? tr("Сессия истекла — перезайдите через Telegram", "Session expired — re-open via Telegram")
+        : code === "promo_not_found"
+        ? tr("Промокод недействителен", "Promo code is invalid")
+        : code === "promo_already_used"
+        ? tr("Этот промокод уже использован", "You already used this promo")
         : tr(`Не удалось оформить заказ${code ? `: ${code}` : ""}`, `Failed to place order${code ? `: ${code}` : ""}`);
       haptic("error");
       toast.error(msg);
@@ -245,6 +291,49 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
               </section>
             )}
 
+            {/* Promo code */}
+            <section className="rounded-2xl bg-card shadow-card p-4 space-y-2">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                {tr("Промокод", "Promo code")}
+              </div>
+              {promo ? (
+                <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono font-bold text-sm">{promo.code}</div>
+                    <div className="text-[11px] text-primary font-semibold">
+                      −{promo.discountPct}% · −{formatTHB(promo.discountUSD)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={removePromo}
+                    className="w-8 h-8 rounded-full bg-card flex items-center justify-center active:scale-90"
+                    aria-label={tr("Убрать", "Remove")}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder={tr("Введите код", "Enter code")}
+                    className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm font-mono uppercase placeholder:font-sans placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-primary"
+                    maxLength={64}
+                    onKeyDown={(e) => { if (e.key === "Enter") applyPromo(); }}
+                  />
+                  <button
+                    onClick={applyPromo}
+                    disabled={promoLoading || !promoInput.trim()}
+                    className="px-4 rounded-xl gradient-primary text-primary-foreground font-bold text-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {promoLoading ? "…" : tr("Применить", "Apply")}
+                  </button>
+                </div>
+              )}
+            </section>
+
             {/* Totals */}
             <section className="rounded-2xl bg-card shadow-card p-4 space-y-1.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -257,9 +346,15 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
                   <span>+${DELIVERY_FEE_USD}</span>
                 </div>
               )}
+              {promo && (
+                <div className="flex items-center justify-between text-xs text-primary font-semibold">
+                  <span>{tr("Промокод", "Promo")} {promo.code} (−{promo.discountPct}%)</span>
+                  <span>−{formatTHB(promo.discountUSD)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2 border-t border-border">
                 <span className="font-semibold">{tr("К оплате", "Total")}</span>
-                <span className="font-display font-bold text-2xl">{formatTHB(total)}</span>
+                <span className="font-display font-bold text-2xl">{formatTHB(finalTotal)}</span>
               </div>
             </section>
 
@@ -293,7 +388,7 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
 
             {/* Crypto amount + копирование */}
             <CryptoAmountCard
-              amountUSD={total}
+              amountUSD={finalTotal}
               crypto={crypto}
               cryptoName={
                 cryptoMeta.name === cryptoMeta.network || cryptoMeta.code === cryptoMeta.network
