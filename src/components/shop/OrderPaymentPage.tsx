@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, Copy, Clock, Truck, MapPin } from "lucide-react";
+import { ArrowLeft, Check, Copy, Clock, Truck, MapPin, Tag, X } from "lucide-react";
 import { CRYPTO_LIST, useAccount, type CryptoCode } from "@/store/account";
 import { useCart, RESERVATION_MS, DELIVERY_FEE_USD } from "@/store/cart";
 import { useI18n } from "@/lib/i18n";
@@ -9,6 +9,7 @@ import { loc } from "@/lib/loc";
 import { findDistrict } from "@/data/locations";
 import { STASH_TYPES } from "@/types/shop";
 import { CryptoAmountCard } from "@/components/shop/CryptoAmountCard";
+import { Promo, ApiError } from "@/lib/api";
 import { toast } from "sonner";
 
 interface OrderPaymentPageProps {
