@@ -255,7 +255,7 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
           )}
         </button>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => setSelectedCountry("__analytics__")}
             className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
@@ -264,7 +264,6 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📊
             </div>
             <div className="font-bold text-sm">Аналитика</div>
-            
           </button>
           <button
             onClick={() => setSelectedCountry("__broadcast__")}
@@ -274,7 +273,15 @@ const AdminPage = ({ onExit }: AdminPageProps) => {
               📢
             </div>
             <div className="font-bold text-sm">Рассылка</div>
-            
+          </button>
+          <button
+            onClick={() => setSelectedCountry("__promo__")}
+            className="bg-card rounded-2xl p-4 shadow-card active:scale-[0.98] text-left"
+          >
+            <div className="w-10 h-10 rounded-xl gradient-mango flex items-center justify-center text-xl mb-2">
+              🎟️
+            </div>
+            <div className="font-bold text-sm">Промокоды</div>
           </button>
         </div>
 
