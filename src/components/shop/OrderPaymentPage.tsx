@@ -54,10 +54,50 @@ export const OrderPaymentPage = ({ onBack, onPaid }: OrderPaymentPageProps) => {
   const [submitting, setSubmitting] = useState(false);
   const cryptoMeta = useMemo(() => CRYPTO_LIST.find((c) => c.code === crypto)!, [crypto]);
 
+  // ---- Promo code ----
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ code: string; discountPct: number; discountUSD: number } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const finalTotal = useMemo(
+    () => (promo ? Math.max(0, Math.round((total - promo.discountUSD) * 100) / 100) : total),
+    [total, promo]
+  );
+
   // Reservation timer
   const msLeft = reservedAt ? Math.max(0, reservedAt + RESERVATION_MS - Date.now()) : 0;
   const mm = String(Math.floor(msLeft / 60000)).padStart(2, "0");
   const ss = String(Math.floor((msLeft % 60000) / 1000)).padStart(2, "0");
+
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoLoading(true);
+    try {
+      const res = await Promo.validate(code, total);
+      setPromo({ code: res.code, discountPct: res.discountPct, discountUSD: res.discountUSD });
+      haptic("success");
+      toast.success(tr(`Скидка −${res.discountPct}% применена`, `Discount −${res.discountPct}% applied`));
+    } catch (e) {
+      const err = e as ApiError;
+      const errCode = err?.body && typeof err.body === "object" ? (err.body as any).error : undefined;
+      const msg = errCode === "promo_not_found"
+        ? tr("Промокод не найден", "Promo code not found")
+        : errCode === "promo_already_used"
+        ? tr("Этот промокод уже использован", "You already used this promo")
+        : tr("Не удалось применить промокод", "Failed to apply promo");
+      haptic("error");
+      toast.error(msg);
+      setPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromo(null);
+    setPromoInput("");
+  };
 
   const copy = async (text: string) => {
     try {
